@@ -90,6 +90,7 @@ defmodule RunlocalWeb.TunnelChannel do
     if subdomain = socket.assigns[:subdomain] do
       Runlocal.Registry.unregister(subdomain)
       Runlocal.RateLimiter.cleanup(subdomain)
+      Runlocal.BandwidthLimiter.cleanup(subdomain)
     end
 
     :ok

@@ -15,28 +15,37 @@ defmodule RunlocalWeb.TunnelController do
         |> halt()
 
       %{channel_pid: channel_pid} ->
-        if not Runlocal.RateLimiter.allow?(subdomain) do
-          conn
-          |> put_resp_content_type("text/plain")
-          |> send_resp(429, "Too Many Requests")
-          |> halt()
-        else
-          case read_body(conn, length: @max_request_size, read_length: 1_000_000) do
-            {:ok, body, conn} ->
-              forward_request(conn, channel_pid, body)
+        cond do
+          not Runlocal.RateLimiter.allow?(subdomain) ->
+            conn
+            |> put_resp_content_type("text/plain")
+            |> send_resp(429, "Too Many Requests")
+            |> halt()
 
-            {:more, _partial, conn} ->
-              conn
-              |> put_resp_content_type("text/plain")
-              |> send_resp(413, "Payload Too Large")
-              |> halt()
+          true ->
+            case read_body(conn, length: @max_request_size, read_length: 1_000_000) do
+              {:ok, body, conn} ->
+                if not Runlocal.BandwidthLimiter.allow?(subdomain, byte_size(body)) do
+                  conn
+                  |> put_resp_content_type("text/plain")
+                  |> send_resp(429, "Bandwidth limit exceeded")
+                  |> halt()
+                else
+                  forward_request(conn, channel_pid, body)
+                end
 
-            {:error, _reason} ->
-              conn
-              |> put_resp_content_type("text/plain")
-              |> send_resp(400, "Bad Request")
-              |> halt()
-          end
+              {:more, _partial, conn} ->
+                conn
+                |> put_resp_content_type("text/plain")
+                |> send_resp(413, "Payload Too Large")
+                |> halt()
+
+              {:error, _reason} ->
+                conn
+                |> put_resp_content_type("text/plain")
+                |> send_resp(400, "Bad Request")
+                |> halt()
+            end
         end
     end
   end

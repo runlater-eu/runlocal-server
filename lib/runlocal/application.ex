@@ -9,6 +9,8 @@ defmodule Runlocal.Application do
   def start(_type, _args) do
     Runlocal.Registry.init()
     Runlocal.RateLimiter.init()
+    Runlocal.IpBlocklist.init()
+    Runlocal.BandwidthLimiter.init()
 
     children = [
       RunlocalWeb.Telemetry,

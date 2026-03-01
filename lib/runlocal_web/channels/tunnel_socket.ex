@@ -6,7 +6,12 @@ defmodule RunlocalWeb.TunnelSocket do
   @impl true
   def connect(_params, socket, connect_info) do
     client_ip = extract_client_ip(connect_info)
-    {:ok, assign(socket, :client_ip, client_ip)}
+
+    if Runlocal.IpBlocklist.blocked?(client_ip) do
+      :error
+    else
+      {:ok, assign(socket, :client_ip, client_ip)}
+    end
   end
 
   @impl true
