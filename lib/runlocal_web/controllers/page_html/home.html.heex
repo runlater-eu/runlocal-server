@@ -60,10 +60,11 @@
         $ npx runlocal 3000
       </code>
       <div class="mt-3 text-slate-400 text-sm font-mono text-left">
-        <div>Tunnel created!</div>
-        <div class="text-emerald-400">https://fuzzy-tiger.runlocal.eu</div>
+        <div>Forwarding <span class="text-emerald-400">https://fuzzy-tiger.runlocal.eu</span></div>
+        <div>        &rarr; <span class="text-slate-300">http://localhost:3000</span></div>
       </div>
     </div>
+    <p class="text-slate-500 text-sm">Replace 3000 with whatever port your app runs on.</p>
   </div>
 
   <!-- How it works -->
@@ -85,8 +86,8 @@
         </div>
         <h3 class="text-white font-semibold mb-2">Run the CLI</h3>
         <p class="text-slate-400 text-sm">
-          <code class="text-emerald-400 text-xs">npx runlocal 3000</code>
-          connects via WebSocket and gets a unique subdomain.
+          <code class="text-emerald-400 text-xs">npx runlocal &lt;port&gt;</code>
+          connects your local port to a public URL via WebSocket.
         </p>
       </div>
 
@@ -172,7 +173,7 @@
       <a href="https://github.com/runlater-eu/runlocal" class="hover:text-emerald-400 transition-colors">GitHub</a>
     </div>
     <p class="text-slate-500 text-sm">
-      Built with Phoenix &amp; Elixir. Open source.
+      Built with Phoenix &amp; Elixir. <a href="https://github.com/runlater-eu/runlocal" class="text-slate-400 hover:text-emerald-400 transition-colors">Open source CLI</a>.
     </p>
   </div>
 </div>
