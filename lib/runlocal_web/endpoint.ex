@@ -12,7 +12,7 @@ defmodule RunlocalWeb.Endpoint do
   ]
 
   socket "/tunnel", RunlocalWeb.TunnelSocket,
-    websocket: [timeout: :infinity]
+    websocket: [timeout: :infinity, connect_info: [:peer_data, :x_headers]]
 
   # Serve at "/" the static files from "priv/static" directory.
   #

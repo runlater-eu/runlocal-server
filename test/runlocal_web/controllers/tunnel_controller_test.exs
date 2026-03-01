@@ -12,7 +12,6 @@ defmodule RunlocalWeb.TunnelControllerTest do
   end
 
   test "proxies request through tunnel" do
-    # Spawn a process that acts like a channel
     test_pid = self()
 
     channel_pid =
@@ -42,5 +41,34 @@ defmodule RunlocalWeb.TunnelControllerTest do
     assert_receive {:got_request, %{"method" => "GET", "path" => "/api/test"}}
 
     Runlocal.Registry.unregister("proxy-test")
+  end
+
+  test "returns 429 when rate limited" do
+    channel_pid =
+      spawn(fn ->
+        receive do
+          _ -> :ok
+        after
+          5000 -> :ok
+        end
+      end)
+
+    Runlocal.Registry.register("rate-test", channel_pid)
+
+    # Exhaust the token bucket
+    for _ <- 1..10 do
+      assert Runlocal.RateLimiter.allow?("rate-test")
+    end
+
+    conn =
+      build_conn(:get, "/")
+      |> Map.put(:host, "rate-test.localhost")
+      |> RunlocalWeb.Plugs.SubdomainRouter.call([])
+
+    assert conn.status == 429
+    assert conn.resp_body =~ "Too Many Requests"
+
+    Runlocal.RateLimiter.cleanup("rate-test")
+    Runlocal.Registry.unregister("rate-test")
   end
 end

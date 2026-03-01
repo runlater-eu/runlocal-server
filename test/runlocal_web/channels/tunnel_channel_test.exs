@@ -4,7 +4,7 @@ defmodule RunlocalWeb.TunnelChannelTest do
   setup do
     {:ok, _, socket} =
       RunlocalWeb.TunnelSocket
-      |> socket()
+      |> socket(%{}, %{client_ip: "127.0.0.1"})
       |> subscribe_and_join(RunlocalWeb.TunnelChannel, "tunnel:connect")
 
     %{socket: socket}
@@ -27,13 +27,10 @@ defmodule RunlocalWeb.TunnelChannelTest do
   test "http_response resolves pending request", %{socket: socket} do
     request_id = "test-req-123"
 
-    # Simulate an http_request arriving
     send(socket.channel_pid, {:http_request, request_id, %{"method" => "GET", "path" => "/"}, self()})
 
-    # The channel should push the request to the client
     assert_push "http_request", %{"request_id" => ^request_id, "method" => "GET"}
 
-    # Client sends response
     push(socket, "http_response", %{
       "request_id" => request_id,
       "status" => 200,
@@ -41,8 +38,25 @@ defmodule RunlocalWeb.TunnelChannelTest do
       "body" => "hello"
     })
 
-    # We should receive the tunnel response
     assert_receive {:tunnel_response, ^request_id, %{"status" => 200, "body" => "hello"}}
+  end
+
+  test "rejects oversized response body", %{socket: socket} do
+    request_id = "test-req-oversized"
+
+    send(socket.channel_pid, {:http_request, request_id, %{"method" => "GET", "path" => "/"}, self()})
+    assert_push "http_request", %{"request_id" => ^request_id}
+
+    large_body = String.duplicate("x", 10_000_001)
+
+    push(socket, "http_response", %{
+      "request_id" => request_id,
+      "status" => 200,
+      "headers" => [],
+      "body" => large_body
+    })
+
+    assert_receive {:tunnel_response, ^request_id, %{"status" => 502, "body" => "Response too large"}}
   end
 
   test "leave unregisters subdomain", %{socket: socket} do
@@ -51,9 +65,29 @@ defmodule RunlocalWeb.TunnelChannelTest do
 
     Process.unlink(socket.channel_pid)
     close(socket)
-    # Give it a moment to process the terminate callback
     Process.sleep(50)
 
     assert Runlocal.Registry.lookup(subdomain) == nil
+  end
+
+  test "rejects join when IP has too many tunnels" do
+    ip = "10.99.99.99"
+
+    # Register 5 tunnels for this IP
+    for i <- 1..5 do
+      Runlocal.Registry.register("limit-test-#{i}", self(), ip)
+    end
+
+    result =
+      RunlocalWeb.TunnelSocket
+      |> socket(%{}, %{client_ip: ip})
+      |> subscribe_and_join(RunlocalWeb.TunnelChannel, "tunnel:connect")
+
+    assert {:error, %{reason: "too_many_tunnels"}} = result
+
+    # Cleanup
+    for i <- 1..5 do
+      Runlocal.Registry.unregister("limit-test-#{i}")
+    end
   end
 end

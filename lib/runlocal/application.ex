@@ -8,6 +8,7 @@ defmodule Runlocal.Application do
   @impl true
   def start(_type, _args) do
     Runlocal.Registry.init()
+    Runlocal.RateLimiter.init()
 
     children = [
       RunlocalWeb.Telemetry,

@@ -3,29 +3,37 @@ defmodule RunlocalWeb.TunnelChannel do
   require Logger
 
   @two_hours_ms 2 * 60 * 60 * 1000
+  @max_tunnels_per_ip 5
+  @max_response_size 10_000_000
 
   @impl true
   def join("tunnel:connect", _payload, socket) do
-    subdomain = Runlocal.Subdomain.generate()
-    Runlocal.Registry.register(subdomain, self())
-    Process.send_after(self(), :ttl_expired, @two_hours_ms)
+    client_ip = socket.assigns[:client_ip]
 
-    base_domain = Application.get_env(:runlocal, :base_domain, "localhost")
+    if client_ip && Runlocal.Registry.count_by_ip(client_ip) >= @max_tunnels_per_ip do
+      {:error, %{reason: "too_many_tunnels"}}
+    else
+      subdomain = Runlocal.Subdomain.generate()
+      Runlocal.Registry.register(subdomain, self(), client_ip)
+      Process.send_after(self(), :ttl_expired, @two_hours_ms)
 
-    url =
-      if base_domain == "localhost" do
-        "http://#{subdomain}.localhost:4000"
-      else
-        "https://#{subdomain}.#{base_domain}"
-      end
+      base_domain = Application.get_env(:runlocal, :base_domain, "localhost")
 
-    socket =
-      socket
-      |> assign(:subdomain, subdomain)
-      |> assign(:pending_requests, %{})
+      url =
+        if base_domain == "localhost" do
+          "http://#{subdomain}.localhost:4000"
+        else
+          "https://#{subdomain}.#{base_domain}"
+        end
 
-    send(self(), {:after_join, url})
-    {:ok, socket}
+      socket =
+        socket
+        |> assign(:subdomain, subdomain)
+        |> assign(:pending_requests, %{})
+
+      send(self(), {:after_join, url})
+      {:ok, socket}
+    end
   end
 
   @impl true
@@ -52,15 +60,28 @@ defmodule RunlocalWeb.TunnelChannel do
     request_id = payload["request_id"]
     Logger.info("[Channel] Received http_response for #{request_id}, pending keys: #{inspect(Map.keys(socket.assigns.pending_requests))}")
 
-    case Map.pop(socket.assigns.pending_requests, request_id) do
-      {nil, _} ->
-        Logger.warning("[Channel] No pending request found for #{request_id}")
-        {:noreply, socket}
+    response_body = payload["body"] || ""
 
-      {caller_pid, remaining} ->
-        Logger.info("[Channel] Sending response to caller #{inspect(caller_pid)} alive=#{Process.alive?(caller_pid)}")
-        send(caller_pid, {:tunnel_response, request_id, payload})
-        {:noreply, assign(socket, :pending_requests, remaining)}
+    if byte_size(response_body) > @max_response_size do
+      case Map.pop(socket.assigns.pending_requests, request_id) do
+        {nil, _} ->
+          {:noreply, socket}
+
+        {caller_pid, remaining} ->
+          send(caller_pid, {:tunnel_response, request_id, %{"status" => 502, "body" => "Response too large"}})
+          {:noreply, assign(socket, :pending_requests, remaining)}
+      end
+    else
+      case Map.pop(socket.assigns.pending_requests, request_id) do
+        {nil, _} ->
+          Logger.warning("[Channel] No pending request found for #{request_id}")
+          {:noreply, socket}
+
+        {caller_pid, remaining} ->
+          Logger.info("[Channel] Sending response to caller #{inspect(caller_pid)} alive=#{Process.alive?(caller_pid)}")
+          send(caller_pid, {:tunnel_response, request_id, payload})
+          {:noreply, assign(socket, :pending_requests, remaining)}
+      end
     end
   end
 
@@ -68,6 +89,7 @@ defmodule RunlocalWeb.TunnelChannel do
   def terminate(_reason, socket) do
     if subdomain = socket.assigns[:subdomain] do
       Runlocal.Registry.unregister(subdomain)
+      Runlocal.RateLimiter.cleanup(subdomain)
     end
 
     :ok
