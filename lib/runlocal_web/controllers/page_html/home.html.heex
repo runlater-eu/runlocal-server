@@ -3,7 +3,7 @@
   <div class="max-w-4xl mx-auto px-6 pt-24 pb-16 text-center">
     <div class="inline-flex items-center gap-2 glass-button rounded-full px-4 py-1.5 text-sm text-emerald-300 mb-8">
       <span class="w-2 h-2 bg-emerald-400 rounded-full animate-pulse"></span>
-      Open source tunnel service
+      From the makers of <a href="https://runlater.eu" class="text-emerald-400 hover:text-emerald-300 underline">runlater.eu</a>
     </div>
 
     <h1 class="text-5xl sm:text-6xl font-bold text-white tracking-tight mb-6">
@@ -12,7 +12,7 @@
     </h1>
 
     <p class="text-xl text-slate-300 max-w-2xl mx-auto mb-10">
-      Get a public HTTPS URL for your local dev server. No signup, no config, just one command.
+      Get a public HTTPS URL for your local dev server. No signup, no config, no tracking. Just one command.
     </p>
 
     <div class="glass-card rounded-2xl p-6 max-w-lg mx-auto mb-6">
@@ -21,6 +21,13 @@
         <div class="w-3 h-3 rounded-full bg-yellow-400/60"></div>
         <div class="w-3 h-3 rounded-full bg-green-400/60"></div>
         <span class="text-slate-400 text-xs ml-2 font-mono">Terminal</span>
+        <button
+          id="copy-btn"
+          onclick="navigator.clipboard.writeText('npx runlocal 3000').then(() => { const btn = document.getElementById('copy-btn'); btn.textContent = 'Copied!'; setTimeout(() => btn.textContent = 'Copy', 2000); })"
+          class="ml-auto text-xs text-slate-400 hover:text-emerald-400 transition-colors cursor-pointer bg-white/5 hover:bg-white/10 rounded px-2 py-1 border border-white/10"
+        >
+          Copy
+        </button>
       </div>
       <code class="text-emerald-400 text-lg sm:text-xl font-mono font-semibold">
         $ npx runlocal 3000
@@ -78,18 +85,38 @@
         <p class="text-slate-400 text-sm">Every tunnel gets a valid TLS certificate via wildcard DNS.</p>
       </div>
       <div class="glass-card rounded-xl p-6">
-        <h3 class="text-white font-semibold mb-2">WebSocket powered</h3>
-        <p class="text-slate-400 text-sm">No SSH, no daemons. Clean WebSocket tunnel through Phoenix Channels.</p>
+        <h3 class="text-white font-semibold mb-2">Zero tracking</h3>
+        <p class="text-slate-400 text-sm">No analytics, no cookies, no logging. Your traffic is forwarded in real time and never stored.</p>
       </div>
       <div class="glass-card rounded-xl p-6">
-        <h3 class="text-white font-semibold mb-2">European hosted</h3>
-        <p class="text-slate-400 text-sm">Runs on European infrastructure. GDPR-friendly, no tracking.</p>
+        <h3 class="text-white font-semibold mb-2">European owned &amp; hosted</h3>
+        <p class="text-slate-400 text-sm">Norwegian company. German infrastructure. Zero US companies in the data chain. GDPR-compliant by design.</p>
       </div>
     </div>
   </div>
 
+  <!-- Built by -->
+  <div class="max-w-4xl mx-auto px-6 py-16">
+    <div class="glass-card rounded-2xl p-8 text-center">
+      <p class="text-slate-300 mb-4">
+        Built by the team behind
+        <a href="https://runlater.eu" class="text-emerald-400 hover:text-emerald-300 font-semibold">runlater.eu</a>
+        — European-owned async task scheduling. Same company, same privacy-first principles.
+      </p>
+      <p class="text-slate-400 text-sm">
+        Whitenoise AS &middot; Oslo, Norway &middot; Org.nr: 821 244 722
+      </p>
+    </div>
+  </div>
+
   <!-- Footer -->
-  <div class="max-w-4xl mx-auto px-6 py-12 text-center">
+  <div class="max-w-4xl mx-auto px-6 py-12 text-center border-t border-white/10">
+    <div class="flex flex-wrap justify-center gap-6 text-sm text-slate-400 mb-4">
+      <a href="/privacy" class="hover:text-emerald-400 transition-colors">Privacy Policy</a>
+      <a href="/legal/dpa" class="hover:text-emerald-400 transition-colors">DPA</a>
+      <a href="https://runlater.eu" class="hover:text-emerald-400 transition-colors">runlater.eu</a>
+      <a href="https://github.com/runlater-eu/runlocal" class="hover:text-emerald-400 transition-colors">GitHub</a>
+    </div>
     <p class="text-slate-500 text-sm">
       Built with Phoenix &amp; Elixir. Open source.
     </p>

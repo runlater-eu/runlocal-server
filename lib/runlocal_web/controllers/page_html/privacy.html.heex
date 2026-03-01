@@ -1,0 +1,157 @@
+<div class="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-emerald-900">
+  <div class="max-w-3xl mx-auto py-16 px-6">
+    <a href="/" class="text-emerald-400 hover:text-emerald-300 text-sm mb-8 inline-block">&larr; Back to home</a>
+
+    <h1 class="text-3xl font-bold text-white mb-2">Your data stays in Europe. Period.</h1>
+    <p class="text-sm text-slate-400 mb-8">Last updated: March 1, 2026</p>
+
+    <div class="prose max-w-none">
+      <p class="text-lg text-slate-300 mb-6">
+        Runlocal is a tunnel service — it forwards HTTP requests between the internet and your local machine in real time. We don't store your traffic. We don't log your requests. We don't track you. There is nothing to sell, share, or breach.
+      </p>
+
+      <h2 class="text-xl font-semibold text-white mt-10 mb-4">What we don't do</h2>
+      <ul class="list-disc pl-6 text-slate-300 mb-6 space-y-2">
+        <li><strong class="text-white">No request logging</strong> — HTTP requests and responses are proxied in real time and never written to disk</li>
+        <li><strong class="text-white">No analytics</strong> — no Google Analytics, no Plausible, no tracking scripts of any kind</li>
+        <li><strong class="text-white">No cookies</strong> — the tunnel uses WebSocket, no cookies are set</li>
+        <li><strong class="text-white">No accounts</strong> — no signup, no email collection, no user database</li>
+        <li><strong class="text-white">No third-party scripts</strong> — the landing page loads one font (Inter from Google Fonts) and nothing else</li>
+      </ul>
+
+      <h2 class="text-xl font-semibold text-white mt-10 mb-4">What we do</h2>
+      <ul class="list-disc pl-6 text-slate-300 mb-6 space-y-2">
+        <li><strong class="text-white">Forward traffic</strong> — HTTP requests arrive, get forwarded to your CLI via WebSocket, and the response comes back. That's it.</li>
+        <li><strong class="text-white">Assign subdomains</strong> — a random adjective-animal pair is generated in memory and forgotten when you disconnect</li>
+        <li><strong class="text-white">Standard server logs</strong> — Phoenix produces standard Elixir logger output (timestamps, request paths, status codes). These are ephemeral container logs, not persisted to any database or log aggregation service.</li>
+      </ul>
+
+      <h2 class="text-xl font-semibold text-white mt-10 mb-4">Infrastructure</h2>
+      <div class="glass-card rounded-xl p-6 mb-6">
+        <table class="w-full text-sm">
+          <tbody class="text-slate-300">
+            <tr class="border-b border-white/10">
+              <td class="py-3 pr-4 font-medium text-white">Hosting</td>
+              <td class="py-3">netcup GmbH, Nuremberg, Germany</td>
+            </tr>
+            <tr class="border-b border-white/10">
+              <td class="py-3 pr-4 font-medium text-white">Company</td>
+              <td class="py-3">Whitenoise AS, Oslo, Norway (Org.nr: 821 244 722)</td>
+            </tr>
+            <tr class="border-b border-white/10">
+              <td class="py-3 pr-4 font-medium text-white">Encryption</td>
+              <td class="py-3">TLS 1.2+ for all connections (HTTPS + WSS)</td>
+            </tr>
+            <tr>
+              <td class="py-3 pr-4 font-medium text-white">US companies in data chain</td>
+              <td class="py-3 text-emerald-400 font-semibold">Zero</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h2 class="text-xl font-semibold text-white mt-10 mb-4">At a glance</h2>
+      <ul class="list-disc pl-6 text-slate-300 mb-6 space-y-2">
+        <li><strong class="text-white">1 sub-processor</strong> — netcup GmbH (Germany), infrastructure only</li>
+        <li><strong class="text-white">Zero US companies</strong> in the data chain</li>
+        <li><strong class="text-white">Zero data stored</strong> — no database, no user data, no request logs</li>
+        <li><strong class="text-white">Encrypted</strong> in transit (TLS 1.2+ everywhere)</li>
+        <li><strong class="text-white">European-owned</strong> — Norwegian company, no US parent, no investors</li>
+      </ul>
+
+      <div class="glass-card rounded-xl p-4 mb-8">
+        <p class="text-sm text-slate-400 m-0">
+          Whitenoise AS is a Norwegian company. Norway is part of the European Economic Area (EEA) and subject to GDPR through the EEA Agreement. Your data receives the same protection as in any EU member state.
+        </p>
+      </div>
+
+      <hr class="border-white/10 my-10" />
+
+      <h2 class="text-xl font-semibold text-white mb-4">Who built this?</h2>
+      <p class="text-slate-300 mb-6">
+        Runlocal is built by the same team behind <a href="https://runlater.eu" class="text-emerald-400 hover:text-emerald-300">runlater.eu</a> — a European-owned async task scheduling service. Same company, same privacy-first principles, same infrastructure.
+      </p>
+
+      <hr class="border-white/10 my-10" />
+
+      <h2 class="text-lg font-semibold text-white mb-4">Full Privacy Policy</h2>
+      <p class="text-sm text-slate-400 mb-6">
+        The details above are the summary. Below is the full legal text for your compliance team.
+      </p>
+
+      <h2 class="text-xl font-semibold text-white mt-8 mb-4">1. Data Controller</h2>
+      <ul class="list-none pl-0 text-slate-300 mb-4 space-y-1">
+        <li><strong class="text-white">Whitenoise AS</strong></li>
+        <li>Org.nr: 821 244 722</li>
+        <li>Oslo, Norway</li>
+        <li><a href="mailto:support@runlater.eu" class="text-emerald-400 hover:text-emerald-300">support@runlater.eu</a></li>
+      </ul>
+
+      <h2 class="text-xl font-semibold text-white mt-8 mb-4">2. Data We Collect</h2>
+      <p class="text-slate-300 mb-4">
+        Runlocal does not collect personal data. The service operates without accounts, without cookies, and without persistent storage.
+      </p>
+      <p class="text-slate-300 mb-4">
+        When you use the tunnel:
+      </p>
+      <ul class="list-disc pl-6 text-slate-300 mb-4 space-y-1">
+        <li>Your HTTP traffic is forwarded in real time through a WebSocket connection and is never persisted</li>
+        <li>A random subdomain is assigned in memory and released when you disconnect</li>
+        <li>Standard server logs (timestamps, paths, status codes) exist only in ephemeral container output</li>
+      </ul>
+
+      <h2 class="text-xl font-semibold text-white mt-8 mb-4">3. Cookies</h2>
+      <p class="text-slate-300 mb-4">
+        Runlocal does not set any cookies. The tunnel connection uses WebSocket, and the landing page does not use cookies.
+      </p>
+
+      <h2 class="text-xl font-semibold text-white mt-8 mb-4">4. Third-Party Services</h2>
+      <p class="text-slate-300 mb-4">
+        The landing page loads the Inter font from Google Fonts. No other third-party services are used. The tunnel itself uses no third-party services.
+      </p>
+
+      <h2 class="text-xl font-semibold text-white mt-8 mb-4">5. Sub-processors</h2>
+      <div class="overflow-x-auto mb-6">
+        <table class="w-full text-sm">
+          <thead>
+            <tr class="border-b border-white/10">
+              <th class="text-left py-3 pr-4 font-semibold text-white">Company</th>
+              <th class="text-left py-3 pr-4 font-semibold text-white">Purpose</th>
+              <th class="text-left py-3 font-semibold text-white">Location</th>
+            </tr>
+          </thead>
+          <tbody class="text-slate-300">
+            <tr>
+              <td class="py-3 pr-4 font-medium text-white">netcup GmbH</td>
+              <td class="py-3 pr-4">Infrastructure hosting</td>
+              <td class="py-3">Nuremberg, Germany</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h2 class="text-xl font-semibold text-white mt-8 mb-4">6. International Transfers</h2>
+      <p class="text-slate-300 mb-4">
+        All data processing occurs within the European Union. We do not transfer data outside the EU/EEA.
+      </p>
+
+      <h2 class="text-xl font-semibold text-white mt-8 mb-4">7. Your Rights (GDPR)</h2>
+      <p class="text-slate-300 mb-4">
+        Since we don't collect or store personal data, there is no personal data to access, rectify, or delete. If you have concerns, contact us at <a href="mailto:support@runlater.eu" class="text-emerald-400 hover:text-emerald-300">support@runlater.eu</a>.
+      </p>
+
+      <h2 class="text-xl font-semibold text-white mt-8 mb-4">8. Changes to This Policy</h2>
+      <p class="text-slate-300 mb-4">
+        We may update this Privacy Policy from time to time. The "last updated" date at the top indicates when changes were made.
+      </p>
+
+      <h2 class="text-xl font-semibold text-white mt-8 mb-4">9. Contact</h2>
+      <ul class="list-none pl-0 text-slate-300 mb-4 space-y-1">
+        <li><strong class="text-white">Whitenoise AS</strong></li>
+        <li>Org.nr: 821 244 722</li>
+        <li>Oslo, Norway</li>
+        <li><a href="mailto:support@runlater.eu" class="text-emerald-400 hover:text-emerald-300">support@runlater.eu</a></li>
+      </ul>
+    </div>
+  </div>
+</div>

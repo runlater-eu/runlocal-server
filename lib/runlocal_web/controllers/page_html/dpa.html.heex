@@ -1,0 +1,127 @@
+<div class="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-emerald-900">
+  <div class="max-w-3xl mx-auto py-16 px-6">
+    <a href="/" class="text-emerald-400 hover:text-emerald-300 text-sm mb-8 inline-block">&larr; Back to home</a>
+
+    <h1 class="text-3xl font-bold text-white mb-2">Data Processing Agreement</h1>
+    <p class="text-sm text-slate-400 mb-8">Last updated: March 1, 2026</p>
+
+    <div class="prose max-w-none">
+      <p class="text-slate-300 mb-6">
+        This Data Processing Agreement ("DPA") forms part of the agreement between Whitenoise AS ("Processor", "we") and you ("Controller", "you") for the use of the Runlocal service ("Service"). This DPA is entered into pursuant to Article 28 of the General Data Protection Regulation (EU) 2016/679 ("GDPR").
+      </p>
+
+      <h2 class="text-xl font-semibold text-white mt-8 mb-4">1. Definitions</h2>
+      <ul class="list-disc pl-6 text-slate-300 mb-4 space-y-1">
+        <li><strong class="text-white">"Personal Data"</strong> means any data relating to an identified or identifiable natural person that is processed by the Processor on behalf of the Controller through the Service.</li>
+        <li><strong class="text-white">"Processing"</strong> means any operation performed on Personal Data, including collection, storage, retrieval, use, disclosure, and deletion.</li>
+        <li><strong class="text-white">"Sub-processor"</strong> means any third party engaged by the Processor to process Personal Data on behalf of the Controller.</li>
+      </ul>
+
+      <h2 class="text-xl font-semibold text-white mt-8 mb-4">2. Scope and Purpose</h2>
+      <p class="text-slate-300 mb-4">
+        The Processor operates a tunnel service that forwards HTTP traffic between the public internet and the Controller's local development server via WebSocket. The Service does not store, log, or persist any HTTP request or response data. Processing is limited to real-time forwarding of traffic.
+      </p>
+
+      <h2 class="text-xl font-semibold text-white mt-8 mb-4">3. Types of Personal Data</h2>
+      <p class="text-slate-300 mb-4">
+        The Personal Data processed depends entirely on the HTTP traffic that flows through the tunnel. This may include any data contained in HTTP request and response bodies, headers, and URLs. The Processor does not inspect, store, or log this data — it is forwarded in real time and never persisted.
+      </p>
+
+      <h2 class="text-xl font-semibold text-white mt-8 mb-4">4. Obligations of the Processor</h2>
+      <p class="text-slate-300 mb-4">The Processor shall:</p>
+      <ul class="list-disc pl-6 text-slate-300 mb-4 space-y-1">
+        <li>Process Personal Data only by forwarding it in real time as instructed through the tunnel connection</li>
+        <li>Not store, log, or persist any HTTP traffic data</li>
+        <li>Ensure that persons authorized to operate the Service are bound by confidentiality obligations</li>
+        <li>Implement appropriate technical and organizational measures to ensure security of processing (see Section 6)</li>
+        <li>Not engage another processor without prior written authorization from the Controller (see Section 7)</li>
+        <li>Assist the Controller in responding to data subject requests</li>
+        <li>Make available all information necessary to demonstrate compliance and allow for audits</li>
+      </ul>
+
+      <h2 class="text-xl font-semibold text-white mt-8 mb-4">5. Obligations of the Controller</h2>
+      <p class="text-slate-300 mb-4">The Controller shall:</p>
+      <ul class="list-disc pl-6 text-slate-300 mb-4 space-y-1">
+        <li>Ensure there is a lawful basis for processing Personal Data through the Service</li>
+        <li>Not use the tunnel to transmit data that requires higher security measures than those provided</li>
+        <li>Ensure that data subjects are informed about the processing as required by GDPR</li>
+      </ul>
+
+      <h2 class="text-xl font-semibold text-white mt-8 mb-4">6. Technical and Organizational Measures</h2>
+      <p class="text-slate-300 mb-4">The Processor implements the following security measures:</p>
+      <ul class="list-disc pl-6 text-slate-300 mb-4 space-y-1">
+        <li><strong class="text-white">Encryption in transit:</strong> All data transmitted via TLS 1.2 or higher (HTTPS and WSS)</li>
+        <li><strong class="text-white">No data at rest:</strong> HTTP traffic is forwarded in real time and never written to disk</li>
+        <li><strong class="text-white">Access control:</strong> SSH key-based server access, no shared credentials</li>
+        <li><strong class="text-white">Data minimization:</strong> No traffic data is stored, logged, or aggregated</li>
+        <li><strong class="text-white">Infrastructure:</strong> Hosted in netcup data center, Nuremberg, Germany (ISO 27001 certified)</li>
+      </ul>
+
+      <h2 class="text-xl font-semibold text-white mt-8 mb-4">7. Sub-processors</h2>
+      <p class="text-slate-300 mb-4">
+        The Controller authorizes the Processor to use the following sub-processor:
+      </p>
+      <div class="overflow-x-auto mb-6">
+        <table class="w-full text-sm">
+          <thead>
+            <tr class="border-b border-white/10">
+              <th class="text-left py-3 pr-4 font-semibold text-white">Company</th>
+              <th class="text-left py-3 pr-4 font-semibold text-white">Purpose</th>
+              <th class="text-left py-3 font-semibold text-white">Location</th>
+            </tr>
+          </thead>
+          <tbody class="text-slate-300">
+            <tr>
+              <td class="py-3 pr-4 font-medium text-white">netcup GmbH</td>
+              <td class="py-3 pr-4">Infrastructure hosting</td>
+              <td class="py-3">Nuremberg, Germany</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="text-slate-300 mb-4">
+        The Processor shall notify the Controller of any intended changes to sub-processors at least 30 days in advance. If the Controller objects, they may terminate the Service within 30 days.
+      </p>
+
+      <h2 class="text-xl font-semibold text-white mt-8 mb-4">8. Data Breach Notification</h2>
+      <p class="text-slate-300 mb-4">The Processor shall:</p>
+      <ul class="list-disc pl-6 text-slate-300 mb-4 space-y-1">
+        <li>Notify the Controller without undue delay (and no later than 48 hours) after becoming aware of a personal data breach</li>
+        <li>Provide sufficient information for the Controller to meet its obligations under Articles 33 and 34 GDPR</li>
+      </ul>
+
+      <h2 class="text-xl font-semibold text-white mt-8 mb-4">9. Data Location</h2>
+      <p class="text-slate-300 mb-4">
+        All processing occurs within the European Union (Nuremberg, Germany). The Processor shall not transfer Personal Data outside the EU/EEA without the prior written consent of the Controller.
+      </p>
+
+      <h2 class="text-xl font-semibold text-white mt-8 mb-4">10. Data Retention</h2>
+      <p class="text-slate-300 mb-4">
+        The Service does not retain any HTTP traffic data. Tunnel sessions exist only in memory and are released when the client disconnects. There is no data to delete upon termination because no data is stored.
+      </p>
+
+      <h2 class="text-xl font-semibold text-white mt-8 mb-4">11. Audits</h2>
+      <p class="text-slate-300 mb-4">
+        The Processor shall make available all information necessary to demonstrate compliance with this DPA and allow for audits. Audit requests should be submitted in writing with reasonable notice.
+      </p>
+
+      <h2 class="text-xl font-semibold text-white mt-8 mb-4">12. Term and Termination</h2>
+      <p class="text-slate-300 mb-4">
+        This DPA is effective for the duration of the Controller's use of the Service. Since no data is stored, no post-termination data handling is required.
+      </p>
+
+      <h2 class="text-xl font-semibold text-white mt-8 mb-4">13. Governing Law</h2>
+      <p class="text-slate-300 mb-4">
+        This DPA is governed by the laws of Norway. Any disputes shall be resolved in the courts of Oslo, Norway.
+      </p>
+
+      <h2 class="text-xl font-semibold text-white mt-8 mb-4">14. Contact</h2>
+      <ul class="list-none pl-0 text-slate-300 mb-4 space-y-1">
+        <li><strong class="text-white">Whitenoise AS</strong></li>
+        <li>Org.nr: 821 244 722</li>
+        <li>Oslo, Norway</li>
+        <li><a href="mailto:support@runlater.eu" class="text-emerald-400 hover:text-emerald-300">support@runlater.eu</a></li>
+      </ul>
+    </div>
+  </div>
+</div>

@@ -18,6 +18,8 @@ defmodule RunlocalWeb.Router do
     pipe_through :browser
 
     get "/", PageController, :home
+    get "/privacy", PageController, :privacy
+    get "/legal/dpa", PageController, :dpa
   end
 
   # Other scopes may use custom stacks.
