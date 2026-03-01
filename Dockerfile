@@ -70,4 +70,4 @@ HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
   CMD curl -f http://localhost:${PORT}/ || exit 1
 
 # Start the application
-CMD ["bin/server"]
+CMD ["bin/runlocal", "start"]
