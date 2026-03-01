@@ -1,5 +1,6 @@
 defmodule RunlocalWeb.TunnelChannel do
   use Phoenix.Channel
+  require Logger
 
   @two_hours_ms 2 * 60 * 60 * 1000
 
@@ -34,6 +35,7 @@ defmodule RunlocalWeb.TunnelChannel do
   end
 
   def handle_info({:http_request, request_id, request_data, caller_pid}, socket) do
+    Logger.info("[Channel] Received http_request #{request_id}, pushing to client")
     pending = Map.put(socket.assigns.pending_requests, request_id, caller_pid)
     socket = assign(socket, :pending_requests, pending)
 
@@ -48,12 +50,15 @@ defmodule RunlocalWeb.TunnelChannel do
   @impl true
   def handle_in("http_response", payload, socket) do
     request_id = payload["request_id"]
+    Logger.info("[Channel] Received http_response for #{request_id}, pending keys: #{inspect(Map.keys(socket.assigns.pending_requests))}")
 
     case Map.pop(socket.assigns.pending_requests, request_id) do
       {nil, _} ->
+        Logger.warning("[Channel] No pending request found for #{request_id}")
         {:noreply, socket}
 
       {caller_pid, remaining} ->
+        Logger.info("[Channel] Sending response to caller #{inspect(caller_pid)} alive=#{Process.alive?(caller_pid)}")
         send(caller_pid, {:tunnel_response, request_id, payload})
         {:noreply, assign(socket, :pending_requests, remaining)}
     end

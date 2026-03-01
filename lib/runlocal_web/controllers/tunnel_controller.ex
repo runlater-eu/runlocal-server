@@ -1,5 +1,6 @@
 defmodule RunlocalWeb.TunnelController do
   import Plug.Conn
+  require Logger
 
   @timeout_ms 30_000
   @hop_by_hop_headers ~w(transfer-encoding connection keep-alive te trailers upgrade proxy-authenticate proxy-authorization)
@@ -24,10 +25,12 @@ defmodule RunlocalWeb.TunnelController do
           "body" => body
         }
 
+        Logger.info("[Tunnel] Sending request #{request_id} to channel #{inspect(channel_pid)} alive=#{Process.alive?(channel_pid)}")
         send(channel_pid, {:http_request, request_id, request_data, self()})
 
         receive do
           {:tunnel_response, ^request_id, response} ->
+            Logger.info("[Tunnel] Got response for #{request_id} status=#{response["status"]}")
             status = response["status"] || 502
             headers = response["headers"] || []
             resp_body = response["body"] || ""
@@ -44,6 +47,7 @@ defmodule RunlocalWeb.TunnelController do
             |> halt()
         after
           @timeout_ms ->
+            Logger.error("[Tunnel] TIMEOUT for #{request_id} - channel #{inspect(channel_pid)} alive=#{Process.alive?(channel_pid)}")
             conn
             |> put_resp_content_type("text/plain")
             |> send_resp(504, "Gateway timeout: tunnel client did not respond")
