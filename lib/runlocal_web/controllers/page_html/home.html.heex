@@ -1,6 +1,33 @@
 <div class="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-emerald-900">
+  <!-- Nav -->
+  <div class="max-w-4xl mx-auto px-6 py-6 flex justify-between items-center">
+    <a href="/" class="flex items-center gap-2.5 text-xl font-semibold text-white no-underline">
+      <span class="relative flex h-7 w-7 items-center justify-center">
+        <!-- Tunnel icon: concentric arcs with a dot traveling through -->
+        <svg viewBox="0 0 28 28" fill="none" class="w-7 h-7">
+          <!-- Outer ring -->
+          <circle cx="14" cy="14" r="12" stroke="#34d399" stroke-width="2" stroke-opacity="0.3" fill="none" />
+          <!-- Middle ring -->
+          <circle cx="14" cy="14" r="8" stroke="#34d399" stroke-width="2" stroke-opacity="0.5" fill="none" />
+          <!-- Inner ring -->
+          <circle cx="14" cy="14" r="4" stroke="#34d399" stroke-width="2" stroke-opacity="0.8" fill="none" />
+          <!-- Traveling dot -->
+          <circle cx="14" cy="14" r="2" fill="#34d399">
+            <animate attributeName="r" values="2;4;2" dur="3s" repeatCount="indefinite" />
+            <animate attributeName="opacity" values="1;0.4;1" dur="3s" repeatCount="indefinite" />
+          </circle>
+        </svg>
+      </span>
+      runlocal
+    </a>
+    <div class="flex items-center gap-4 text-sm">
+      <a href="/privacy" class="text-slate-400 hover:text-emerald-400 transition-colors hidden sm:inline">Privacy</a>
+      <a href="https://github.com/runlater-eu/runlocal" class="text-slate-400 hover:text-emerald-400 transition-colors hidden sm:inline">GitHub</a>
+    </div>
+  </div>
+
   <!-- Hero -->
-  <div class="max-w-4xl mx-auto px-6 pt-24 pb-16 text-center">
+  <div class="max-w-4xl mx-auto px-6 pt-12 pb-16 text-center">
     <div class="inline-flex items-center gap-2 glass-button rounded-full px-4 py-1.5 text-sm text-emerald-300 mb-8">
       <span class="w-2 h-2 bg-emerald-400 rounded-full animate-pulse"></span>
       From the makers of <a href="https://runlater.eu" class="text-emerald-400 hover:text-emerald-300 underline">runlater.eu</a>

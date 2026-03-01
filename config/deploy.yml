@@ -14,8 +14,12 @@ servers:
       ulimit: nofile=65536:65536
 
 proxy:
-  ssl: true
-  host: runlocal.eu
+  ssl:
+    certificate_pem: SSL_CERTIFICATE
+    private_key_pem: SSL_PRIVATE_KEY
+  hosts:
+    - runlocal.eu
+    - "*.runlocal.eu"
   app_port: 4000
   healthcheck:
     path: /
