@@ -1,0 +1,36 @@
+service: runlocal
+
+image: gautema/runlocal
+
+builder:
+  arch: amd64
+  remote: ssh://root@159.195.53.120
+
+servers:
+  web:
+    hosts:
+      - 159.195.53.120
+    options:
+      ulimit: nofile=65536:65536
+
+proxy:
+  ssl: true
+  host: runlocal.eu
+  app_port: 4000
+  healthcheck:
+    path: /
+
+registry:
+  server: ghcr.io
+  username: gautema
+  password:
+    - KAMAL_REGISTRY_PASSWORD
+
+env:
+  clear:
+    PHX_HOST: runlocal.eu
+    BASE_DOMAIN: runlocal.eu
+    PORT: 4000
+    MIX_ENV: prod
+  secret:
+    - SECRET_KEY_BASE

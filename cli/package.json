@@ -1,0 +1,14 @@
+{
+  "name": "runlocal",
+  "version": "0.1.0",
+  "description": "Expose localhost to the internet via runlocal.eu",
+  "bin": {
+    "runlocal": "./index.js"
+  },
+  "files": ["index.js"],
+  "keywords": ["tunnel", "localhost", "ngrok", "dev", "https"],
+  "license": "MIT",
+  "dependencies": {
+    "ws": "^8.0.0"
+  }
+}
