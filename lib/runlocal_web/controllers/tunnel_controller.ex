@@ -2,6 +2,7 @@ defmodule RunlocalWeb.TunnelController do
   import Plug.Conn
 
   @timeout_ms 30_000
+  @hop_by_hop_headers ~w(transfer-encoding connection keep-alive te trailers upgrade proxy-authenticate proxy-authorization)
 
   def proxy(conn, subdomain) do
     case Runlocal.Registry.lookup(subdomain) do
@@ -32,7 +33,9 @@ defmodule RunlocalWeb.TunnelController do
             resp_body = response["body"] || ""
 
             conn =
-              Enum.reduce(headers, conn, fn [key, value], acc ->
+              headers
+              |> Enum.reject(fn [key, _] -> key in @hop_by_hop_headers end)
+              |> Enum.reduce(conn, fn [key, value], acc ->
                 put_resp_header(acc, key, value)
               end)
 
