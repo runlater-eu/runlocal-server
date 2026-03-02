@@ -17,7 +17,7 @@ config :runlocal, RunlocalWeb.Endpoint,
   adapter: Bandit.PhoenixAdapter,
   render_errors: [
     formats: [html: RunlocalWeb.ErrorHTML, json: RunlocalWeb.ErrorJSON],
-    layout: false
+    layout: {RunlocalWeb.Layouts, :root}
   ],
   pubsub_server: Runlocal.PubSub,
   live_view: [signing_salt: "aVzU11yk"]
