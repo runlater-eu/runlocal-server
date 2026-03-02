@@ -41,3 +41,6 @@ npm-debug.log
 # CLI node_modules
 /cli/node_modules/
 
+# Local data directory (DETS files from tests/dev)
+/data/
+
