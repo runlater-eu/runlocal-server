@@ -120,8 +120,11 @@ defmodule RunlocalWeb.TunnelChannel do
 
   def handle_info({:http_request, request_id, request_data, caller_pid}, socket) do
     Logger.info("[Channel] Received http_request #{request_id}, pushing to client")
-    pending = Map.put(socket.assigns.pending_requests, request_id, caller_pid)
+    start_time = System.monotonic_time(:millisecond)
+    pending = Map.put(socket.assigns.pending_requests, request_id, {caller_pid, start_time})
     socket = assign(socket, :pending_requests, pending)
+
+    broadcast_new_request(socket.assigns.subdomain, request_id, request_data)
 
     push(socket, "http_request", Map.put(request_data, "request_id", request_id))
     {:noreply, socket}
@@ -143,7 +146,8 @@ defmodule RunlocalWeb.TunnelChannel do
         {nil, _} ->
           {:noreply, socket}
 
-        {caller_pid, remaining} ->
+        {{caller_pid, start_time}, remaining} ->
+          broadcast_request_updated(socket.assigns.subdomain, request_id, payload, start_time)
           send(caller_pid, {:tunnel_response, request_id, %{"status" => 502, "body" => "Response too large"}})
           {:noreply, assign(socket, :pending_requests, remaining)}
       end
@@ -153,13 +157,51 @@ defmodule RunlocalWeb.TunnelChannel do
           Logger.warning("[Channel] No pending request found for #{request_id}")
           {:noreply, socket}
 
-        {caller_pid, remaining} ->
+        {{caller_pid, start_time}, remaining} ->
           Logger.info("[Channel] Sending response to caller #{inspect(caller_pid)} alive=#{Process.alive?(caller_pid)}")
+          broadcast_request_updated(socket.assigns.subdomain, request_id, payload, start_time)
           send(caller_pid, {:tunnel_response, request_id, payload})
           {:noreply, assign(socket, :pending_requests, remaining)}
       end
     end
   end
+
+  defp broadcast_new_request(subdomain, request_id, request_data) do
+    entry = %{
+      id: request_id,
+      method: request_data["method"],
+      path: request_data["path"],
+      query_string: request_data["query_string"],
+      request_headers: request_data["headers"],
+      request_body: truncate_body(request_data["body"]),
+      request_body_size: body_size(request_data["body"]),
+      timestamp: DateTime.utc_now()
+    }
+
+    Phoenix.PubSub.broadcast(Runlocal.PubSub, "inspect:#{subdomain}", {:new_request, entry})
+  end
+
+  defp broadcast_request_updated(subdomain, request_id, payload, start_time) do
+    duration_ms = System.monotonic_time(:millisecond) - start_time
+
+    update = %{
+      id: request_id,
+      status: payload["status"],
+      response_headers: payload["headers"],
+      response_body: truncate_body(payload["body"]),
+      response_body_size: body_size(payload["body"]),
+      duration_ms: duration_ms
+    }
+
+    Phoenix.PubSub.broadcast(Runlocal.PubSub, "inspect:#{subdomain}", {:request_updated, update})
+  end
+
+  defp truncate_body(nil), do: nil
+  defp truncate_body(body) when byte_size(body) <= 10_240, do: body
+  defp truncate_body(body), do: binary_part(body, 0, 10_240)
+
+  defp body_size(nil), do: 0
+  defp body_size(body), do: byte_size(body)
 
   @impl true
   def terminate(_reason, socket) do

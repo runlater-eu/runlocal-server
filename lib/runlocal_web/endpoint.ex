@@ -14,6 +14,9 @@ defmodule RunlocalWeb.Endpoint do
   socket "/tunnel", RunlocalWeb.TunnelSocket,
     websocket: [timeout: :infinity, max_frame_size: 11_000_000, connect_info: [:peer_data, :x_headers, :uri]]
 
+  socket "/live", Phoenix.LiveView.Socket,
+    websocket: [connect_info: [session: @session_options]]
+
   # Serve at "/" the static files from "priv/static" directory.
   #
   # When code reloading is disabled (e.g., in production),
