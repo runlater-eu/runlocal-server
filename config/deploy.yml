@@ -14,8 +14,7 @@ servers:
       ulimit: nofile=65536:65536
       cpu-shares: 128
       memory: 512m
-    volumes:
-      - runlocal-data:/home/app/data
+      volume: runlocal-data:/home/app/data
 
 proxy:
   ssl:
