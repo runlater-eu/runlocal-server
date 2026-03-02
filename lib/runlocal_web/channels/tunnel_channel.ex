@@ -15,9 +15,13 @@ defmodule RunlocalWeb.TunnelChannel do
     else
       case resolve_subdomain(socket) do
         {:ok, subdomain, fallback} ->
+          authenticated = socket.assigns[:api_key] != nil and fallback == nil
           Runlocal.Registry.register(subdomain, self(), client_ip)
           Runlocal.Stats.track_tunnel(client_ip)
-          Process.send_after(self(), :ttl_expired, @two_hours_ms)
+
+          unless authenticated do
+            Process.send_after(self(), :ttl_expired, @two_hours_ms)
+          end
 
           url = build_url(subdomain)
 
