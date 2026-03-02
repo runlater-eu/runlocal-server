@@ -10,12 +10,27 @@ defmodule RunlocalWeb.TunnelSocket do
     if Runlocal.IpBlocklist.blocked?(client_ip) do
       :error
     else
-      {:ok, assign(socket, :client_ip, client_ip)}
+      query_params = extract_query_params(connect_info)
+
+      socket =
+        socket
+        |> assign(:client_ip, client_ip)
+        |> assign(:api_key, query_params["api_key"])
+        |> assign(:requested_subdomain, query_params["subdomain"])
+
+      {:ok, socket}
     end
   end
 
   @impl true
   def id(_socket), do: nil
+
+  defp extract_query_params(connect_info) do
+    case connect_info[:uri] do
+      %URI{query: query} when is_binary(query) -> URI.decode_query(query)
+      _ -> %{}
+    end
+  end
 
   defp extract_client_ip(connect_info) do
     forwarded_for =

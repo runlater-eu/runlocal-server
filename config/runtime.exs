@@ -27,6 +27,10 @@ if base_domain = System.get_env("BASE_DOMAIN") do
   config :runlocal, base_domain: base_domain
 end
 
+if runlater_api_url = System.get_env("RUNLATER_API_URL") do
+  config :runlocal, runlater_api_url: runlater_api_url
+end
+
 if config_env() == :prod do
   # The secret key base is used to sign/encrypt cookies and other secrets.
   # A default value is used in config/dev.exs and config/test.exs but you

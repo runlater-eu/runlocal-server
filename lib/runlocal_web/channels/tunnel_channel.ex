@@ -13,33 +13,111 @@ defmodule RunlocalWeb.TunnelChannel do
     if client_ip && Runlocal.Registry.count_by_ip(client_ip) >= @max_tunnels_per_ip do
       {:error, %{reason: "too_many_tunnels"}}
     else
-      subdomain = Runlocal.Subdomain.generate()
-      Runlocal.Registry.register(subdomain, self(), client_ip)
-      Runlocal.Stats.track_tunnel(client_ip)
-      Process.send_after(self(), :ttl_expired, @two_hours_ms)
+      case resolve_subdomain(socket) do
+        {:ok, subdomain, fallback} ->
+          Runlocal.Registry.register(subdomain, self(), client_ip)
+          Runlocal.Stats.track_tunnel(client_ip)
+          Process.send_after(self(), :ttl_expired, @two_hours_ms)
 
-      base_domain = Application.get_env(:runlocal, :base_domain, "localhost")
+          url = build_url(subdomain)
 
-      url =
-        if base_domain == "localhost" do
-          "http://#{subdomain}.localhost:4000"
-        else
-          "https://#{subdomain}.#{base_domain}"
+          socket =
+            socket
+            |> assign(:subdomain, subdomain)
+            |> assign(:pending_requests, %{})
+
+          send(self(), {:after_join, url, fallback})
+          {:ok, socket}
+
+        {:error, reason} ->
+          {:error, %{reason: reason}}
+      end
+    end
+  end
+
+  defp resolve_subdomain(socket) do
+    api_key = socket.assigns[:api_key]
+    requested_subdomain = socket.assigns[:requested_subdomain]
+
+    if api_key do
+      case verify_subdomain(api_key, requested_subdomain) do
+        {:ok, subdomain} ->
+          if Runlocal.Registry.lookup(subdomain) do
+            # Stable subdomain is in use, fall back to random
+            {:ok, Runlocal.Subdomain.generate(), subdomain}
+          else
+            {:ok, subdomain, nil}
+          end
+
+        {:error, reason} ->
+          {:error, reason}
+      end
+    else
+      {:ok, Runlocal.Subdomain.generate(), nil}
+    end
+  end
+
+  defp verify_subdomain(api_key, requested_subdomain) do
+    runlater_url = Application.get_env(:runlocal, :runlater_api_url, "https://runlater.eu")
+    url = "#{runlater_url}/api/v1/verify-subdomain"
+
+    body =
+      if requested_subdomain do
+        Jason.encode!(%{subdomain: requested_subdomain})
+      else
+        "{}"
+      end
+
+    headers = [
+      {~c"authorization", ~c"Bearer #{api_key}"},
+      {~c"content-type", ~c"application/json"}
+    ]
+
+    case :httpc.request(:post, {String.to_charlist(url), headers, ~c"application/json", body}, [{:timeout, 5000}], []) do
+      {:ok, {{_, 200, _}, _, resp_body}} ->
+        case Jason.decode(to_string(resp_body)) do
+          {:ok, %{"valid" => true, "subdomain" => subdomain}} ->
+            {:ok, subdomain}
+
+          _ ->
+            {:error, "invalid response from runlater"}
         end
 
-      socket =
-        socket
-        |> assign(:subdomain, subdomain)
-        |> assign(:pending_requests, %{})
+      {:ok, {{_, 401, _}, _, _}} ->
+        {:error, "invalid_api_key"}
 
-      send(self(), {:after_join, url})
-      {:ok, socket}
+      {:ok, {{_, status, _}, _, resp_body}} ->
+        Logger.warning("[Channel] Subdomain verification failed: status=#{status} body=#{resp_body}")
+        {:error, "verification_failed"}
+
+      {:error, reason} ->
+        Logger.warning("[Channel] Subdomain verification error: #{inspect(reason)}")
+        {:error, "verification_unavailable"}
+    end
+  end
+
+  defp build_url(subdomain) do
+    base_domain = Application.get_env(:runlocal, :base_domain, "localhost")
+
+    if base_domain == "localhost" do
+      "http://#{subdomain}.localhost:4000"
+    else
+      "https://#{subdomain}.#{base_domain}"
     end
   end
 
   @impl true
-  def handle_info({:after_join, url}, socket) do
-    push(socket, "tunnel_created", %{"url" => url, "subdomain" => socket.assigns.subdomain})
+  def handle_info({:after_join, url, fallback}, socket) do
+    msg = %{"url" => url, "subdomain" => socket.assigns.subdomain}
+
+    msg =
+      if fallback do
+        Map.merge(msg, %{"fallback" => true, "requested_subdomain" => fallback})
+      else
+        msg
+      end
+
+    push(socket, "tunnel_created", msg)
     {:noreply, socket}
   end
 
