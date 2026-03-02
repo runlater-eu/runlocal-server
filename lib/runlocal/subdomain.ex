@@ -52,6 +52,18 @@ defmodule Runlocal.Subdomain do
     "#{adj}-#{animal}"
   end
 
+  def pick_subdomain(org_slug, "pro", requested) when is_binary(requested) and requested != "" do
+    if valid_subdomain?(requested), do: requested, else: org_slug
+  end
+
+  def pick_subdomain(org_slug, _tier, _requested), do: org_slug
+
+  def valid_subdomain?(s) when is_binary(s) do
+    Regex.match?(~r/^[a-z0-9][a-z0-9-]{1,61}[a-z0-9]$/, s)
+  end
+
+  def valid_subdomain?(_), do: false
+
   def adjectives, do: @adjectives
   def animals, do: @animals
 end

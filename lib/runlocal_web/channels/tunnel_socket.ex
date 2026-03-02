@@ -16,6 +16,7 @@ defmodule RunlocalWeb.TunnelSocket do
         socket
         |> assign(:client_ip, client_ip)
         |> assign(:api_key, query_params["api_key"])
+        |> assign(:requested_subdomain, query_params["subdomain"])
 
       {:ok, socket}
     end

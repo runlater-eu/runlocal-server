@@ -42,12 +42,14 @@ defmodule RunlocalWeb.TunnelChannel do
 
   defp resolve_subdomain(socket) do
     api_key = socket.assigns[:api_key]
+    requested_subdomain = socket.assigns[:requested_subdomain]
 
     if api_key do
-      case verify_subdomain(api_key) do
-        {:ok, subdomain} ->
+      case verify_tunnel(api_key) do
+        {:ok, org_slug, tier} ->
+          subdomain = Runlocal.Subdomain.pick_subdomain(org_slug, tier, requested_subdomain)
+
           if Runlocal.Registry.lookup(subdomain) do
-            # Stable subdomain is in use, fall back to random
             {:ok, Runlocal.Subdomain.generate(), subdomain}
           else
             {:ok, subdomain, nil}
@@ -61,9 +63,9 @@ defmodule RunlocalWeb.TunnelChannel do
     end
   end
 
-  defp verify_subdomain(api_key) do
+  defp verify_tunnel(api_key) do
     runlater_url = Application.get_env(:runlocal, :runlater_api_url, "https://runlater.eu")
-    url = "#{runlater_url}/api/v1/verify-subdomain"
+    url = "#{runlater_url}/api/v1/verify-tunnel"
     body = "{}"
 
     headers = [
@@ -74,8 +76,8 @@ defmodule RunlocalWeb.TunnelChannel do
     case :httpc.request(:post, {String.to_charlist(url), headers, ~c"application/json", body}, [{:timeout, 5000}], []) do
       {:ok, {{_, 200, _}, _, resp_body}} ->
         case Jason.decode(to_string(resp_body)) do
-          {:ok, %{"valid" => true, "subdomain" => subdomain}} ->
-            {:ok, subdomain}
+          {:ok, %{"valid" => true, "org_slug" => org_slug, "tier" => tier}} ->
+            {:ok, org_slug, tier}
 
           _ ->
             {:error, "invalid response from runlater"}
@@ -85,11 +87,11 @@ defmodule RunlocalWeb.TunnelChannel do
         {:error, "invalid_api_key"}
 
       {:ok, {{_, status, _}, _, resp_body}} ->
-        Logger.warning("[Channel] Subdomain verification failed: status=#{status} body=#{resp_body}")
+        Logger.warning("[Channel] Tunnel verification failed: status=#{status} body=#{resp_body}")
         {:error, "verification_failed"}
 
       {:error, reason} ->
-        Logger.warning("[Channel] Subdomain verification error: #{inspect(reason)}")
+        Logger.warning("[Channel] Tunnel verification error: #{inspect(reason)}")
         {:error, "verification_unavailable"}
     end
   end
