@@ -8,7 +8,6 @@ defmodule RunlocalWeb.InspectorLive do
     socket =
       socket
       |> assign(:subdomain, subdomain)
-      |> assign(:token, token)
       |> assign(:entries, [])
       |> assign(:selected_id, nil)
       |> assign(:tunnel_active, false)
@@ -16,19 +15,20 @@ defmodule RunlocalWeb.InspectorLive do
       |> assign(:page_title, "Inspector — #{subdomain}")
 
     if connected?(socket) do
-      tunnel = Runlocal.Registry.lookup(subdomain)
+      case Phoenix.Token.verify(RunlocalWeb.Endpoint, "inspect", token, max_age: :infinity) do
+        {:ok, ^subdomain} ->
+          tunnel = Runlocal.Registry.lookup(subdomain)
 
-      cond do
-        tunnel == nil ->
+          if tunnel do
+            Phoenix.PubSub.subscribe(Runlocal.PubSub, "inspect:#{subdomain}")
+            Process.monitor(tunnel.channel_pid)
+            {:ok, socket |> assign(:tunnel_active, true) |> assign(:authorized, true)}
+          else
+            {:ok, assign(socket, :authorized, true)}
+          end
+
+        _ ->
           {:ok, socket}
-
-        tunnel.inspect_token != token ->
-          {:ok, assign(socket, :authorized, false)}
-
-        true ->
-          Phoenix.PubSub.subscribe(Runlocal.PubSub, "inspect:#{subdomain}")
-          Process.monitor(tunnel.channel_pid)
-          {:ok, socket |> assign(:tunnel_active, true) |> assign(:authorized, true)}
       end
     else
       {:ok, socket}

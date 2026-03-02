@@ -16,7 +16,7 @@ defmodule RunlocalWeb.TunnelChannel do
       case resolve_subdomain(socket) do
         {:ok, subdomain, fallback} ->
           authenticated = socket.assigns[:api_key] != nil and fallback == nil
-          inspect_token = Runlocal.Registry.register(subdomain, self(), client_ip)
+          Runlocal.Registry.register(subdomain, self(), client_ip)
           Runlocal.Stats.track_tunnel(client_ip)
 
           unless authenticated do
@@ -24,6 +24,7 @@ defmodule RunlocalWeb.TunnelChannel do
           end
 
           url = build_url(subdomain)
+          inspect_token = sign_inspect_token(subdomain)
 
           socket =
             socket
@@ -198,6 +199,10 @@ defmodule RunlocalWeb.TunnelChannel do
     }
 
     Phoenix.PubSub.broadcast(Runlocal.PubSub, "inspect:#{subdomain}", {:request_updated, update})
+  end
+
+  defp sign_inspect_token(subdomain) do
+    Phoenix.Token.sign(RunlocalWeb.Endpoint, "inspect", subdomain)
   end
 
   defp truncate_body(nil), do: nil

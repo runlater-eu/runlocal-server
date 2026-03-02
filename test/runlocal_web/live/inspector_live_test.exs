@@ -3,6 +3,10 @@ defmodule RunlocalWeb.InspectorLiveTest do
 
   import Phoenix.LiveViewTest
 
+  defp sign_token(subdomain) do
+    Phoenix.Token.sign(RunlocalWeb.Endpoint, "inspect", subdomain)
+  end
+
   describe "invalid token" do
     test "shows invalid link when tunnel does not exist", %{conn: conn} do
       {:ok, _view, html} = live(conn, "/inspect/nonexistent-tunnel/badtoken")
@@ -21,12 +25,25 @@ defmodule RunlocalWeb.InspectorLiveTest do
 
       assert html =~ "Invalid or expired link"
     end
+
+    test "shows invalid link when token is for different subdomain", %{conn: conn} do
+      subdomain = "test-mismatch-#{System.unique_integer([:positive])}"
+      Runlocal.Registry.register(subdomain, self())
+      wrong_token = sign_token("other-subdomain")
+
+      on_exit(fn -> Runlocal.Registry.unregister(subdomain) end)
+
+      {:ok, _view, html} = live(conn, "/inspect/#{subdomain}/#{wrong_token}")
+
+      assert html =~ "Invalid or expired link"
+    end
   end
 
   describe "with active tunnel" do
     setup do
       subdomain = "test-inspector-#{System.unique_integer([:positive])}"
-      token = Runlocal.Registry.register(subdomain, self())
+      Runlocal.Registry.register(subdomain, self())
+      token = sign_token(subdomain)
 
       on_exit(fn ->
         Runlocal.Registry.unregister(subdomain)
@@ -104,14 +121,13 @@ defmodule RunlocalWeb.InspectorLiveTest do
     end
 
     test "shows disconnected when tunnel process exits", %{conn: conn, subdomain: subdomain} do
-      # Register a separate process we can kill, capturing the new token
       tunnel_pid = spawn(fn -> Process.sleep(:infinity) end)
-      token = Runlocal.Registry.register(subdomain, tunnel_pid)
+      Runlocal.Registry.register(subdomain, tunnel_pid)
+      token = sign_token(subdomain)
 
       {:ok, view, html} = live(conn, "/inspect/#{subdomain}/#{token}")
       assert html =~ "Connected"
 
-      # Kill the tunnel process
       Process.exit(tunnel_pid, :kill)
       Process.sleep(50)
 
