@@ -1,0 +1,80 @@
+<div class="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-emerald-900">
+  <!-- Nav -->
+  <div class="max-w-4xl mx-auto px-6 py-6 flex justify-between items-center">
+    <a href="/" class="flex items-center gap-2.5 text-xl font-semibold text-white no-underline">
+      <span class="relative flex h-7 w-7 items-center justify-center">
+        <svg viewBox="0 0 28 28" fill="none" class="w-7 h-7">
+          <circle cx="14" cy="14" r="12" stroke="#34d399" stroke-width="2" stroke-opacity="0.3" fill="none" />
+          <circle cx="14" cy="14" r="8" stroke="#34d399" stroke-width="2" stroke-opacity="0.5" fill="none" />
+          <circle cx="14" cy="14" r="4" stroke="#34d399" stroke-width="2" stroke-opacity="0.8" fill="none" />
+          <circle cx="14" cy="14" r="2" fill="#34d399">
+            <animate attributeName="r" values="2;4;2" dur="3s" repeatCount="indefinite" />
+            <animate attributeName="opacity" values="1;0.4;1" dur="3s" repeatCount="indefinite" />
+          </circle>
+        </svg>
+      </span>
+      runlocal
+    </a>
+    <a href="/" class="text-sm text-slate-400 hover:text-emerald-400 transition-colors">Home</a>
+  </div>
+
+  <!-- Today -->
+  <div class="max-w-4xl mx-auto px-6 pt-12 pb-8">
+    <h1 class="text-3xl font-bold text-white mb-8">Stats</h1>
+
+    <div class="grid gap-4 grid-cols-2 md:grid-cols-4">
+      <div class="glass-card rounded-xl p-6 text-center">
+        <div class="text-3xl font-bold text-emerald-400"><%= @stats.today.active_tunnels %></div>
+        <div class="text-slate-400 text-sm mt-1">Active tunnels</div>
+      </div>
+      <div class="glass-card rounded-xl p-6 text-center">
+        <div class="text-3xl font-bold text-white"><%= @stats.today.tunnels %></div>
+        <div class="text-slate-400 text-sm mt-1">Tunnels today</div>
+      </div>
+      <div class="glass-card rounded-xl p-6 text-center">
+        <div class="text-3xl font-bold text-white"><%= @stats.today.requests %></div>
+        <div class="text-slate-400 text-sm mt-1">Requests today</div>
+      </div>
+      <div class="glass-card rounded-xl p-6 text-center">
+        <div class="text-3xl font-bold text-white"><%= @stats.today.unique_ips %></div>
+        <div class="text-slate-400 text-sm mt-1">Unique IPs today</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- History -->
+  <%= if map_size(@stats.history) > 0 do %>
+    <div class="max-w-4xl mx-auto px-6 py-8">
+      <h2 class="text-xl font-semibold text-white mb-4">Daily history</h2>
+      <div class="glass-card rounded-xl overflow-hidden">
+        <table class="w-full text-sm">
+          <thead>
+            <tr class="border-b border-white/10">
+              <th class="text-left text-slate-400 font-medium px-6 py-3">Date</th>
+              <th class="text-right text-slate-400 font-medium px-6 py-3">Tunnels</th>
+              <th class="text-right text-slate-400 font-medium px-6 py-3">Requests</th>
+              <th class="text-right text-slate-400 font-medium px-6 py-3">Unique IPs</th>
+            </tr>
+          </thead>
+          <tbody>
+            <%= for {date, day} <- @stats.history |> Enum.sort_by(fn {d, _} -> d end, :desc) do %>
+              <tr class="border-b border-white/5">
+                <td class="px-6 py-3 text-slate-300"><%= date %></td>
+                <td class="px-6 py-3 text-right text-white"><%= day.tunnels %></td>
+                <td class="px-6 py-3 text-right text-white"><%= day.requests %></td>
+                <td class="px-6 py-3 text-right text-white"><%= day.unique_ips %></td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  <% end %>
+
+  <!-- Footer -->
+  <div class="max-w-4xl mx-auto px-6 py-12 text-center border-t border-white/10">
+    <p class="text-slate-500 text-sm">
+      Only aggregate counters. No personal data stored. IPs are hashed and salted for uniqueness counting only.
+    </p>
+  </div>
+</div>

@@ -20,10 +20,7 @@ defmodule RunlocalWeb.Router do
     get "/", PageController, :home
     get "/privacy", PageController, :privacy
     get "/legal/dpa", PageController, :dpa
+    get "/stats", StatsController, :index
   end
 
-  # Other scopes may use custom stacks.
-  # scope "/api", RunlocalWeb do
-  #   pipe_through :api
-  # end
 end

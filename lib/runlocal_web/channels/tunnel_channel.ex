@@ -15,6 +15,7 @@ defmodule RunlocalWeb.TunnelChannel do
     else
       subdomain = Runlocal.Subdomain.generate()
       Runlocal.Registry.register(subdomain, self(), client_ip)
+      Runlocal.Stats.track_tunnel(client_ip)
       Process.send_after(self(), :ttl_expired, @two_hours_ms)
 
       base_domain = Application.get_env(:runlocal, :base_domain, "localhost")

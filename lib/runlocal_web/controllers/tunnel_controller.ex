@@ -31,6 +31,7 @@ defmodule RunlocalWeb.TunnelController do
                   |> send_resp(429, "Bandwidth limit exceeded")
                   |> halt()
                 else
+                  Runlocal.Stats.track_request()
                   forward_request(conn, channel_pid, body)
                 end
 

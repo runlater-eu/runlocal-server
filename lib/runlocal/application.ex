@@ -13,6 +13,7 @@ defmodule Runlocal.Application do
     Runlocal.BandwidthLimiter.init()
 
     children = [
+      Runlocal.Stats,
       RunlocalWeb.Telemetry,
       {DNSCluster, query: Application.get_env(:runlocal, :dns_cluster_query) || :ignore},
       {Phoenix.PubSub, name: Runlocal.PubSub},
