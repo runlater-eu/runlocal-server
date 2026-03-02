@@ -18,6 +18,7 @@ defmodule RunlocalWeb.Router do
     pipe_through :browser
 
     get "/", PageController, :home
+    get "/getting-started", PageController, :getting_started
     get "/privacy", PageController, :privacy
     get "/legal/dpa", PageController, :dpa
     get "/stats", StatsController, :index
