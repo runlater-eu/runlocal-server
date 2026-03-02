@@ -37,10 +37,9 @@ defmodule RunlocalWeb.TunnelChannel do
 
   defp resolve_subdomain(socket) do
     api_key = socket.assigns[:api_key]
-    requested_subdomain = socket.assigns[:requested_subdomain]
 
     if api_key do
-      case verify_subdomain(api_key, requested_subdomain) do
+      case verify_subdomain(api_key) do
         {:ok, subdomain} ->
           if Runlocal.Registry.lookup(subdomain) do
             # Stable subdomain is in use, fall back to random
@@ -57,16 +56,10 @@ defmodule RunlocalWeb.TunnelChannel do
     end
   end
 
-  defp verify_subdomain(api_key, requested_subdomain) do
+  defp verify_subdomain(api_key) do
     runlater_url = Application.get_env(:runlocal, :runlater_api_url, "https://runlater.eu")
     url = "#{runlater_url}/api/v1/verify-subdomain"
-
-    body =
-      if requested_subdomain do
-        Jason.encode!(%{subdomain: requested_subdomain})
-      else
-        "{}"
-      end
+    body = "{}"
 
     headers = [
       {~c"authorization", ~c"Bearer #{api_key}"},
