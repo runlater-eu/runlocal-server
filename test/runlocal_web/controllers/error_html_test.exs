@@ -5,10 +5,14 @@ defmodule RunlocalWeb.ErrorHTMLTest do
   import Phoenix.Template, only: [render_to_string: 4]
 
   test "renders 404.html" do
-    assert render_to_string(RunlocalWeb.ErrorHTML, "404", "html", []) == "Not Found"
+    result = render_to_string(RunlocalWeb.ErrorHTML, "404", "html", [])
+    assert result =~ "404"
+    assert result =~ "Page not found"
   end
 
   test "renders 500.html" do
-    assert render_to_string(RunlocalWeb.ErrorHTML, "500", "html", []) == "Internal Server Error"
+    result = render_to_string(RunlocalWeb.ErrorHTML, "500", "html", [])
+    assert result =~ "500"
+    assert result =~ "Something went wrong"
   end
 end

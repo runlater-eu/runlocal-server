@@ -66,7 +66,7 @@ defmodule RunlocalWeb.TunnelControllerTest do
       |> RunlocalWeb.Plugs.SubdomainRouter.call([])
 
     assert conn.status == 429
-    assert conn.resp_body =~ "Too Many Requests"
+    assert conn.resp_body =~ "Too many requests"
 
     Runlocal.RateLimiter.cleanup("rate-test")
     Runlocal.Registry.unregister("rate-test")

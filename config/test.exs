@@ -8,6 +8,8 @@ config :runlocal, RunlocalWeb.Endpoint,
   server: false
 
 config :runlocal, base_domain: "localhost"
+config :runlocal, subdomain_mode: :random
+config :runlocal, landing_page: false
 
 # Print only warnings and errors during test
 config :logger, level: :warning

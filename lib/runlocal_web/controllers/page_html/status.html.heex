@@ -1,0 +1,33 @@
+<div class="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-emerald-900 flex flex-col items-center justify-center">
+  <div class="text-center">
+    <a href="/" class="inline-flex items-center gap-2.5 text-3xl font-semibold text-white no-underline mb-8">
+      <span class="relative flex h-9 w-9 items-center justify-center">
+        <svg viewBox="0 0 28 28" fill="none" class="w-9 h-9">
+          <circle cx="14" cy="14" r="12" stroke="#34d399" stroke-width="2" stroke-opacity="0.3" fill="none" />
+          <circle cx="14" cy="14" r="8" stroke="#34d399" stroke-width="2" stroke-opacity="0.5" fill="none" />
+          <circle cx="14" cy="14" r="4" stroke="#34d399" stroke-width="2" stroke-opacity="0.8" fill="none" />
+          <circle cx="14" cy="14" r="2" fill="#34d399">
+            <animate attributeName="r" values="2;4;2" dur="3s" repeatCount="indefinite" />
+            <animate attributeName="opacity" values="1;0.4;1" dur="3s" repeatCount="indefinite" />
+          </circle>
+        </svg>
+      </span>
+      runlocal
+    </a>
+
+    <div class="glass-card rounded-2xl p-8 max-w-sm mx-auto mt-6">
+      <div class="flex items-center justify-center gap-3 mb-2">
+        <span class="w-3 h-3 bg-emerald-400 rounded-full animate-pulse"></span>
+        <span class="text-emerald-400 font-semibold text-lg">Running</span>
+      </div>
+      <p class="text-slate-400 text-sm">
+        <%= @tunnel_count %> active <%= if @tunnel_count == 1, do: "tunnel", else: "tunnels" %>
+      </p>
+    </div>
+
+    <div class="flex items-center justify-center gap-6 mt-8 text-sm">
+      <a href="/stats" class="text-slate-400 hover:text-emerald-400 transition-colors">Stats</a>
+      <a href="https://github.com/runlater-eu/runlocal" class="text-slate-400 hover:text-emerald-400 transition-colors">GitHub</a>
+    </div>
+  </div>
+</div>

@@ -39,5 +39,7 @@ env:
     BASE_DOMAIN: runlocal.eu
     PORT: 4000
     MIX_ENV: prod
+    SUBDOMAIN_MODE: runlater
+    LANDING_PAGE: "true"
   secret:
     - SECRET_KEY_BASE

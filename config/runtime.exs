@@ -31,6 +31,22 @@ if runlater_api_url = System.get_env("RUNLATER_API_URL") do
   config :runlocal, runlater_api_url: runlater_api_url
 end
 
+if subdomain_mode = System.get_env("SUBDOMAIN_MODE") do
+  mode =
+    case subdomain_mode do
+      "random" -> :random
+      "custom" -> :custom
+      "runlater" -> :runlater
+      other -> raise "invalid SUBDOMAIN_MODE #{inspect(other)}, expected: random, custom, or runlater"
+    end
+
+  config :runlocal, subdomain_mode: mode
+end
+
+if System.get_env("LANDING_PAGE") == "true" do
+  config :runlocal, landing_page: true
+end
+
 if config_env() == :prod do
   # The secret key base is used to sign/encrypt cookies and other secrets.
   # A default value is used in config/dev.exs and config/test.exs but you

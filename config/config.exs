@@ -9,7 +9,9 @@ import Config
 
 config :runlocal,
   generators: [timestamp_type: :utc_datetime],
-  base_domain: "runlocal.eu"
+  base_domain: "runlocal.eu",
+  subdomain_mode: :random,
+  landing_page: false
 
 # Configure the endpoint
 config :runlocal, RunlocalWeb.Endpoint,

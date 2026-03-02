@@ -41,9 +41,38 @@ defmodule RunlocalWeb.TunnelChannel do
   end
 
   defp resolve_subdomain(socket) do
+    mode = Application.get_env(:runlocal, :subdomain_mode, :random)
     api_key = socket.assigns[:api_key]
     requested_subdomain = socket.assigns[:requested_subdomain]
 
+    case mode do
+      :random ->
+        {:ok, Runlocal.Subdomain.generate(), nil}
+
+      :custom ->
+        resolve_custom_subdomain(requested_subdomain)
+
+      :runlater ->
+        resolve_runlater_subdomain(api_key, requested_subdomain)
+    end
+  end
+
+  defp resolve_custom_subdomain(requested)
+       when is_binary(requested) and requested != "" do
+    if Runlocal.Subdomain.valid_subdomain?(requested) do
+      if Runlocal.Registry.lookup(requested) do
+        {:error, "subdomain_taken"}
+      else
+        {:ok, requested, nil}
+      end
+    else
+      {:ok, Runlocal.Subdomain.generate(), nil}
+    end
+  end
+
+  defp resolve_custom_subdomain(_), do: {:ok, Runlocal.Subdomain.generate(), nil}
+
+  defp resolve_runlater_subdomain(api_key, requested_subdomain) do
     if api_key do
       case verify_tunnel(api_key) do
         {:ok, org_slug, tier} ->
