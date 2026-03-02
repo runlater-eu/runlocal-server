@@ -48,8 +48,9 @@ FROM ${RUNNER_IMAGE} AS runtime
 # Install runtime dependencies
 RUN apk add --no-cache libstdc++ openssl ncurses-libs curl
 
-# Create app user
+# Create app user and data directory
 RUN adduser -D -h /home/app app
+RUN mkdir -p /home/app/data && chown app:app /home/app/data
 USER app
 WORKDIR /home/app
 
