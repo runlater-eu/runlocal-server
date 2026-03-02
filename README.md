@@ -21,13 +21,13 @@ docker run -d \
   -e BASE_DOMAIN=tunnel.example.com \
   -e PHX_HOST=tunnel.example.com \
   -e PHX_SERVER=true \
-  ghcr.io/runlater-eu/runlocal:latest
+  ghcr.io/runlater-eu/runlocal-server:latest
 ```
 
 ### From source
 
 ```bash
-git clone https://github.com/runlater-eu/runlocal.git
+git clone https://github.com/runlater-eu/runlocal-server.git
 cd runlocal
 mix deps.get
 mix assets.deploy

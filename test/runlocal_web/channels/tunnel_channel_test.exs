@@ -2,9 +2,12 @@ defmodule RunlocalWeb.TunnelChannelTest do
   use RunlocalWeb.ChannelCase
 
   setup do
+    # Use a unique IP per test to avoid hitting the per-IP tunnel limit
+    unique_ip = "10.0.0.#{System.unique_integer([:positive]) |> rem(255)}"
+
     {:ok, _, socket} =
       RunlocalWeb.TunnelSocket
-      |> socket(%{}, %{client_ip: "127.0.0.1"})
+      |> socket(%{}, %{client_ip: unique_ip})
       |> subscribe_and_join(RunlocalWeb.TunnelChannel, "tunnel:connect")
 
     %{socket: socket}
