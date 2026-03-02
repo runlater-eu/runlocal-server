@@ -2,9 +2,11 @@ defmodule Runlocal.RegistryTest do
   use ExUnit.Case, async: true
 
   test "register and lookup" do
-    Runlocal.Registry.register("test-sub", self())
+    token = Runlocal.Registry.register("test-sub", self())
+    assert is_binary(token) and byte_size(token) > 0
     result = Runlocal.Registry.lookup("test-sub")
     assert result.channel_pid == self()
+    assert result.inspect_token == token
     assert %DateTime{} = result.created_at
     Runlocal.Registry.unregister("test-sub")
   end

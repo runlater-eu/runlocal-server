@@ -4,24 +4,31 @@ defmodule RunlocalWeb.InspectorLive do
   @max_entries 100
 
   @impl true
-  def mount(%{"subdomain" => subdomain}, _session, socket) do
+  def mount(%{"subdomain" => subdomain, "token" => token}, _session, socket) do
     socket =
       socket
       |> assign(:subdomain, subdomain)
+      |> assign(:token, token)
       |> assign(:entries, [])
       |> assign(:selected_id, nil)
       |> assign(:tunnel_active, false)
+      |> assign(:authorized, false)
       |> assign(:page_title, "Inspector — #{subdomain}")
 
     if connected?(socket) do
       tunnel = Runlocal.Registry.lookup(subdomain)
 
-      if tunnel do
-        Phoenix.PubSub.subscribe(Runlocal.PubSub, "inspect:#{subdomain}")
-        Process.monitor(tunnel.channel_pid)
-        {:ok, assign(socket, :tunnel_active, true)}
-      else
-        {:ok, socket}
+      cond do
+        tunnel == nil ->
+          {:ok, socket}
+
+        tunnel.inspect_token != token ->
+          {:ok, assign(socket, :authorized, false)}
+
+        true ->
+          Phoenix.PubSub.subscribe(Runlocal.PubSub, "inspect:#{subdomain}")
+          Process.monitor(tunnel.channel_pid)
+          {:ok, socket |> assign(:tunnel_active, true) |> assign(:authorized, true)}
       end
     else
       {:ok, socket}
@@ -170,15 +177,17 @@ defmodule RunlocalWeb.InspectorLive do
       <div class="max-w-7xl mx-auto flex" style="height: calc(100vh - 73px);">
         <!-- Left Panel: Request Log -->
         <div class="w-1/3 border-r border-white/10 overflow-y-auto">
-          <%= if !@tunnel_active and Enum.empty?(@entries) do %>
+          <%= if !@tunnel_active and !@authorized and Enum.empty?(@entries) do %>
             <div class="flex items-center justify-center h-full">
               <div class="text-center px-6">
                 <div class="w-12 h-12 rounded-full bg-red-500/20 flex items-center justify-center mx-auto mb-4">
                   <span class="w-3 h-3 rounded-full bg-red-400"></span>
                 </div>
-                <p class="text-slate-300 font-medium mb-2">No active tunnel</p>
+                <p class="text-slate-300 font-medium mb-2">Invalid or expired link</p>
                 <p class="text-slate-500 text-sm">
-                  Start a tunnel with <code class="text-emerald-400">npx runlocal &lt;port&gt;</code>
+                  This inspector URL is not valid. Start a tunnel with
+                  <code class="text-emerald-400">npx runlocal &lt;port&gt;</code>
+                  and use the link from the CLI output.
                 </p>
               </div>
             </div>

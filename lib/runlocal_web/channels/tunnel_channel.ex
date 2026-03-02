@@ -16,7 +16,7 @@ defmodule RunlocalWeb.TunnelChannel do
       case resolve_subdomain(socket) do
         {:ok, subdomain, fallback} ->
           authenticated = socket.assigns[:api_key] != nil and fallback == nil
-          Runlocal.Registry.register(subdomain, self(), client_ip)
+          inspect_token = Runlocal.Registry.register(subdomain, self(), client_ip)
           Runlocal.Stats.track_tunnel(client_ip)
 
           unless authenticated do
@@ -30,7 +30,7 @@ defmodule RunlocalWeb.TunnelChannel do
             |> assign(:subdomain, subdomain)
             |> assign(:pending_requests, %{})
 
-          send(self(), {:after_join, url, fallback})
+          send(self(), {:after_join, url, fallback, inspect_token})
           {:ok, socket}
 
         {:error, reason} ->
@@ -104,8 +104,12 @@ defmodule RunlocalWeb.TunnelChannel do
   end
 
   @impl true
-  def handle_info({:after_join, url, fallback}, socket) do
-    msg = %{"url" => url, "subdomain" => socket.assigns.subdomain}
+  def handle_info({:after_join, url, fallback, inspect_token}, socket) do
+    msg = %{
+      "url" => url,
+      "subdomain" => socket.assigns.subdomain,
+      "inspect_token" => inspect_token
+    }
 
     msg =
       if fallback do

@@ -3,38 +3,48 @@ defmodule RunlocalWeb.InspectorLiveTest do
 
   import Phoenix.LiveViewTest
 
-  describe "no active tunnel" do
-    test "shows disconnected state when tunnel does not exist", %{conn: conn} do
-      {:ok, _view, html} = live(conn, "/inspect/nonexistent-tunnel")
+  describe "invalid token" do
+    test "shows invalid link when tunnel does not exist", %{conn: conn} do
+      {:ok, _view, html} = live(conn, "/inspect/nonexistent-tunnel/badtoken")
 
-      assert html =~ "No active tunnel"
+      assert html =~ "Invalid or expired link"
       assert html =~ "npx runlocal"
-      assert html =~ "Disconnected"
+    end
+
+    test "shows invalid link when token is wrong", %{conn: conn} do
+      subdomain = "test-badtoken-#{System.unique_integer([:positive])}"
+      Runlocal.Registry.register(subdomain, self())
+
+      on_exit(fn -> Runlocal.Registry.unregister(subdomain) end)
+
+      {:ok, _view, html} = live(conn, "/inspect/#{subdomain}/wrong-token")
+
+      assert html =~ "Invalid or expired link"
     end
   end
 
   describe "with active tunnel" do
     setup do
       subdomain = "test-inspector-#{System.unique_integer([:positive])}"
-      Runlocal.Registry.register(subdomain, self())
+      token = Runlocal.Registry.register(subdomain, self())
 
       on_exit(fn ->
         Runlocal.Registry.unregister(subdomain)
       end)
 
-      %{subdomain: subdomain}
+      %{subdomain: subdomain, token: token}
     end
 
-    test "shows connected and waiting state", %{conn: conn, subdomain: subdomain} do
-      {:ok, _view, html} = live(conn, "/inspect/#{subdomain}")
+    test "shows connected and waiting state with valid token", %{conn: conn, subdomain: subdomain, token: token} do
+      {:ok, _view, html} = live(conn, "/inspect/#{subdomain}/#{token}")
 
       assert html =~ "Connected"
       assert html =~ "Waiting for requests"
       assert html =~ subdomain
     end
 
-    test "displays new requests from PubSub", %{conn: conn, subdomain: subdomain} do
-      {:ok, view, _html} = live(conn, "/inspect/#{subdomain}")
+    test "displays new requests from PubSub", %{conn: conn, subdomain: subdomain, token: token} do
+      {:ok, view, _html} = live(conn, "/inspect/#{subdomain}/#{token}")
 
       entry = %{
         id: "req-123",
@@ -56,8 +66,8 @@ defmodule RunlocalWeb.InspectorLiveTest do
       refute html =~ "Waiting for requests"
     end
 
-    test "updates request with response data", %{conn: conn, subdomain: subdomain} do
-      {:ok, view, _html} = live(conn, "/inspect/#{subdomain}")
+    test "updates request with response data", %{conn: conn, subdomain: subdomain, token: token} do
+      {:ok, view, _html} = live(conn, "/inspect/#{subdomain}/#{token}")
 
       entry = %{
         id: "req-456",
@@ -94,11 +104,11 @@ defmodule RunlocalWeb.InspectorLiveTest do
     end
 
     test "shows disconnected when tunnel process exits", %{conn: conn, subdomain: subdomain} do
-      # Register a separate process we can kill
+      # Register a separate process we can kill, capturing the new token
       tunnel_pid = spawn(fn -> Process.sleep(:infinity) end)
-      Runlocal.Registry.register(subdomain, tunnel_pid)
+      token = Runlocal.Registry.register(subdomain, tunnel_pid)
 
-      {:ok, view, html} = live(conn, "/inspect/#{subdomain}")
+      {:ok, view, html} = live(conn, "/inspect/#{subdomain}/#{token}")
       assert html =~ "Connected"
 
       # Kill the tunnel process
@@ -109,8 +119,8 @@ defmodule RunlocalWeb.InspectorLiveTest do
       assert html =~ "Disconnected"
     end
 
-    test "clear button removes all entries", %{conn: conn, subdomain: subdomain} do
-      {:ok, view, _html} = live(conn, "/inspect/#{subdomain}")
+    test "clear button removes all entries", %{conn: conn, subdomain: subdomain, token: token} do
+      {:ok, view, _html} = live(conn, "/inspect/#{subdomain}/#{token}")
 
       entry = %{
         id: "req-789",

@@ -10,11 +10,12 @@ defmodule RunlocalWeb.TunnelChannelTest do
     %{socket: socket}
   end
 
-  test "join assigns a subdomain and pushes tunnel_created", %{socket: socket} do
+  test "join assigns a subdomain and pushes tunnel_created with inspect_token", %{socket: socket} do
     assert socket.assigns.subdomain =~ ~r/^[a-z]+-[a-z]+$/
-    assert_push "tunnel_created", %{"url" => url, "subdomain" => subdomain}
+    assert_push "tunnel_created", %{"url" => url, "subdomain" => subdomain, "inspect_token" => token}
     assert subdomain == socket.assigns.subdomain
     assert url =~ subdomain
+    assert is_binary(token) and byte_size(token) > 0
   end
 
   test "subdomain is registered in registry", %{socket: socket} do

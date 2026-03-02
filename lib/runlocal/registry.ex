@@ -6,7 +6,16 @@ defmodule Runlocal.Registry do
   end
 
   def register(subdomain, channel_pid, client_ip \\ nil) do
-    :ets.insert(@table, {subdomain, %{channel_pid: channel_pid, created_at: DateTime.utc_now(), client_ip: client_ip}})
+    inspect_token = Base.url_encode64(:crypto.strong_rand_bytes(18), padding: false)
+
+    :ets.insert(@table, {subdomain, %{
+      channel_pid: channel_pid,
+      created_at: DateTime.utc_now(),
+      client_ip: client_ip,
+      inspect_token: inspect_token
+    }})
+
+    inspect_token
   end
 
   def lookup(subdomain) do
