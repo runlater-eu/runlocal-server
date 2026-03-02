@@ -12,6 +12,8 @@ servers:
       - 159.195.53.120
     options:
       ulimit: nofile=65536:65536
+      cpu-shares: 128
+      memory: 512m
 
 proxy:
   ssl:
