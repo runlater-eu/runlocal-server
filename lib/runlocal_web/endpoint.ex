@@ -14,8 +14,13 @@ defmodule RunlocalWeb.Endpoint do
   socket "/tunnel", RunlocalWeb.TunnelSocket,
     websocket: [timeout: :infinity, max_frame_size: 11_000_000, connect_info: [:peer_data, :x_headers, :uri]]
 
-  socket "/live", Phoenix.LiveView.Socket,
+  socket "/__live", Phoenix.LiveView.Socket,
     websocket: [connect_info: [session: @session_options]]
+
+  # Subdomain requests must be intercepted before Plug.Static and Plug.Parsers
+  # so that: (1) static files are proxied from the user's app, not served from
+  # runlocal's priv/static, and (2) Plug.Parsers doesn't consume POST bodies.
+  plug RunlocalWeb.Plugs.SubdomainRouter
 
   # Serve at "/" the static files from "priv/static" directory.
   #
@@ -47,7 +52,6 @@ defmodule RunlocalWeb.Endpoint do
 
   plug Plug.MethodOverride
   plug Plug.Head
-  plug RunlocalWeb.Plugs.SubdomainRouter
   plug Plug.Session, @session_options
   plug RunlocalWeb.Router
 end
