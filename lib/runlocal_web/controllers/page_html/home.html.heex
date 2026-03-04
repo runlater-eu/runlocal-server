@@ -1,44 +1,46 @@
 <div class="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-emerald-900">
   <!-- Nav -->
-  <div class="relative max-w-4xl mx-auto px-6 py-6 flex justify-between items-center">
-    <a href="/" class="flex items-center gap-2.5 text-xl font-semibold text-white no-underline">
-      <span class="relative flex h-7 w-7 items-center justify-center">
-        <!-- Tunnel icon: concentric arcs with a dot traveling through -->
-        <svg viewBox="0 0 28 28" fill="none" class="w-7 h-7">
-          <!-- Outer ring -->
-          <circle cx="14" cy="14" r="12" stroke="#34d399" stroke-width="2" stroke-opacity="0.3" fill="none" />
-          <!-- Middle ring -->
-          <circle cx="14" cy="14" r="8" stroke="#34d399" stroke-width="2" stroke-opacity="0.5" fill="none" />
-          <!-- Inner ring -->
-          <circle cx="14" cy="14" r="4" stroke="#34d399" stroke-width="2" stroke-opacity="0.8" fill="none" />
-          <!-- Traveling dot -->
-          <circle cx="14" cy="14" r="2" fill="#34d399">
-            <animate attributeName="r" values="2;4;2" dur="3s" repeatCount="indefinite" />
-            <animate attributeName="opacity" values="1;0.4;1" dur="3s" repeatCount="indefinite" />
-          </circle>
+  <div class="relative max-w-4xl mx-auto px-6 py-6">
+    <div class="flex justify-between items-center">
+      <a href="/" class="flex items-center gap-2.5 text-xl font-semibold text-white no-underline">
+        <span class="relative flex h-7 w-7 items-center justify-center">
+          <!-- Tunnel icon: concentric arcs with a dot traveling through -->
+          <svg viewBox="0 0 28 28" fill="none" class="w-7 h-7">
+            <!-- Outer ring -->
+            <circle cx="14" cy="14" r="12" stroke="#34d399" stroke-width="2" stroke-opacity="0.3" fill="none" />
+            <!-- Middle ring -->
+            <circle cx="14" cy="14" r="8" stroke="#34d399" stroke-width="2" stroke-opacity="0.5" fill="none" />
+            <!-- Inner ring -->
+            <circle cx="14" cy="14" r="4" stroke="#34d399" stroke-width="2" stroke-opacity="0.8" fill="none" />
+            <!-- Traveling dot -->
+            <circle cx="14" cy="14" r="2" fill="#34d399">
+              <animate attributeName="r" values="2;4;2" dur="3s" repeatCount="indefinite" />
+              <animate attributeName="opacity" values="1;0.4;1" dur="3s" repeatCount="indefinite" />
+            </circle>
+          </svg>
+        </span>
+        runlocal
+      </a>
+      <!-- Desktop nav links -->
+      <div class="hidden sm:flex items-center gap-4 text-sm">
+        <a href="/getting-started" class="text-slate-400 hover:text-emerald-400 transition-colors">Getting Started</a>
+        <a href="/privacy" class="text-slate-400 hover:text-emerald-400 transition-colors">Privacy</a>
+        <a href="https://github.com/runlater-eu/runlocal-server" class="text-slate-400 hover:text-emerald-400 transition-colors">GitHub</a>
+      </div>
+      <!-- Mobile hamburger button -->
+      <button
+        id="mobile-menu-btn"
+        onclick="const menu = document.getElementById('mobile-menu'); menu.classList.toggle('hidden');"
+        class="sm:hidden text-slate-400 hover:text-emerald-400 transition-colors p-1"
+        aria-label="Toggle menu"
+      >
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-6 h-6">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
         </svg>
-      </span>
-      runlocal
-    </a>
-    <!-- Desktop nav links -->
-    <div class="hidden sm:flex items-center gap-4 text-sm">
-      <a href="/getting-started" class="text-slate-400 hover:text-emerald-400 transition-colors">Getting Started</a>
-      <a href="/privacy" class="text-slate-400 hover:text-emerald-400 transition-colors">Privacy</a>
-      <a href="https://github.com/runlater-eu/runlocal-server" class="text-slate-400 hover:text-emerald-400 transition-colors">GitHub</a>
+      </button>
     </div>
-    <!-- Mobile hamburger button -->
-    <button
-      id="mobile-menu-btn"
-      onclick="const menu = document.getElementById('mobile-menu'); menu.classList.toggle('hidden');"
-      class="sm:hidden text-slate-400 hover:text-emerald-400 transition-colors p-1"
-      aria-label="Toggle menu"
-    >
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-6 h-6">
-        <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
-      </svg>
-    </button>
     <!-- Mobile dropdown menu -->
-    <div id="mobile-menu" class="hidden sm:hidden absolute top-full right-6 glass-card rounded-xl py-2 px-1 min-w-[160px] z-50">
+    <div id="mobile-menu" class="hidden sm:hidden absolute right-6 top-full glass-card rounded-xl py-2 px-1 min-w-[160px] z-50">
       <a href="/getting-started" class="block px-4 py-2 text-sm text-slate-400 hover:text-emerald-400 transition-colors">Getting Started</a>
       <a href="/privacy" class="block px-4 py-2 text-sm text-slate-400 hover:text-emerald-400 transition-colors">Privacy</a>
       <a href="https://github.com/runlater-eu/runlocal-server" class="block px-4 py-2 text-sm text-slate-400 hover:text-emerald-400 transition-colors">GitHub</a>
@@ -117,6 +119,12 @@
         <h3 class="text-white font-semibold mb-2">Share the URL</h3>
         <p class="text-slate-400 text-sm">Anyone can access your local server via the public HTTPS URL.</p>
       </div>
+    </div>
+    <div class="text-center mt-8">
+      <a href="/getting-started" class="inline-flex items-center gap-1 text-emerald-400 text-sm font-medium hover:gap-2 transition-all">
+        See the full getting started guide
+        <svg viewBox="0 0 20 20" fill="currentColor" class="w-4 h-4"><path fill-rule="evenodd" d="M3 10a.75.75 0 0 1 .75-.75h10.638L10.23 5.29a.75.75 0 1 1 1.04-1.08l5.5 5.25a.75.75 0 0 1 0 1.08l-5.5 5.25a.75.75 0 1 1-1.04-1.08l4.158-3.96H3.75A.75.75 0 0 1 3 10Z" clip-rule="evenodd" /></svg>
+      </a>
     </div>
   </div>
 
