@@ -45,4 +45,14 @@ defmodule RunlocalWeb.PageController do
       redirect(conn, to: ~p"/")
     end
   end
+
+  def terms(conn, _params) do
+    if Application.get_env(:runlocal, :landing_page) do
+      conn
+      |> assign(:page_title, "Terms of Use")
+      |> render(:terms)
+    else
+      redirect(conn, to: ~p"/")
+    end
+  end
 end

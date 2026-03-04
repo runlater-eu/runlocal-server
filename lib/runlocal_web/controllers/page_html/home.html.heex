@@ -1,6 +1,6 @@
 <div class="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-emerald-900">
   <!-- Nav -->
-  <div class="max-w-4xl mx-auto px-6 py-6 flex justify-between items-center">
+  <div class="relative max-w-4xl mx-auto px-6 py-6 flex justify-between items-center">
     <a href="/" class="flex items-center gap-2.5 text-xl font-semibold text-white no-underline">
       <span class="relative flex h-7 w-7 items-center justify-center">
         <!-- Tunnel icon: concentric arcs with a dot traveling through -->
@@ -20,10 +20,28 @@
       </span>
       runlocal
     </a>
-    <div class="flex items-center gap-4 text-sm">
-      <a href="/getting-started" class="text-slate-400 hover:text-emerald-400 transition-colors hidden sm:inline">Getting Started</a>
-      <a href="/privacy" class="text-slate-400 hover:text-emerald-400 transition-colors hidden sm:inline">Privacy</a>
-      <a href="https://github.com/runlater-eu/runlocal-server" class="text-slate-400 hover:text-emerald-400 transition-colors hidden sm:inline">GitHub</a>
+    <!-- Desktop nav links -->
+    <div class="hidden sm:flex items-center gap-4 text-sm">
+      <a href="/getting-started" class="text-slate-400 hover:text-emerald-400 transition-colors">Getting Started</a>
+      <a href="/privacy" class="text-slate-400 hover:text-emerald-400 transition-colors">Privacy</a>
+      <a href="https://github.com/runlater-eu/runlocal-server" class="text-slate-400 hover:text-emerald-400 transition-colors">GitHub</a>
+    </div>
+    <!-- Mobile hamburger button -->
+    <button
+      id="mobile-menu-btn"
+      onclick="const menu = document.getElementById('mobile-menu'); menu.classList.toggle('hidden');"
+      class="sm:hidden text-slate-400 hover:text-emerald-400 transition-colors p-1"
+      aria-label="Toggle menu"
+    >
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-6 h-6">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
+      </svg>
+    </button>
+    <!-- Mobile dropdown menu -->
+    <div id="mobile-menu" class="hidden sm:hidden absolute top-full right-6 glass-card rounded-xl py-2 px-1 min-w-[160px] z-50">
+      <a href="/getting-started" class="block px-4 py-2 text-sm text-slate-400 hover:text-emerald-400 transition-colors">Getting Started</a>
+      <a href="/privacy" class="block px-4 py-2 text-sm text-slate-400 hover:text-emerald-400 transition-colors">Privacy</a>
+      <a href="https://github.com/runlater-eu/runlocal-server" class="block px-4 py-2 text-sm text-slate-400 hover:text-emerald-400 transition-colors">GitHub</a>
     </div>
   </div>
 
@@ -31,7 +49,7 @@
   <div class="max-w-4xl mx-auto px-6 pt-12 pb-16 text-center">
     <div class="inline-flex items-center gap-2 glass-button rounded-full px-4 py-1.5 text-sm text-emerald-300 mb-8">
       <span class="w-2 h-2 bg-emerald-400 rounded-full animate-pulse"></span>
-      From the makers of <a href="https://runlater.eu" class="text-emerald-400 hover:text-emerald-300 underline">runlater.eu</a>
+      Open source · 100% European · No tracking
     </div>
 
     <h1 class="text-5xl sm:text-6xl font-bold text-white tracking-tight mb-6">
@@ -204,6 +222,7 @@
   <div class="max-w-4xl mx-auto px-6 py-12 text-center border-t border-white/10">
     <div class="flex flex-wrap justify-center gap-6 text-sm text-slate-400 mb-4">
       <a href="/privacy" class="hover:text-emerald-400 transition-colors">Privacy Policy</a>
+      <a href="/legal/terms" class="hover:text-emerald-400 transition-colors">Terms of Use</a>
       <a href="/legal/dpa" class="hover:text-emerald-400 transition-colors">DPA</a>
       <a href="https://runlater.eu" class="hover:text-emerald-400 transition-colors">runlater.eu</a>
       <a href="https://github.com/runlater-eu/runlocal-server" class="hover:text-emerald-400 transition-colors">GitHub</a>

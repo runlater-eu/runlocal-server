@@ -21,6 +21,7 @@ defmodule RunlocalWeb.Router do
     get "/getting-started", PageController, :getting_started
     get "/privacy", PageController, :privacy
     get "/legal/dpa", PageController, :dpa
+    get "/legal/terms", PageController, :terms
     get "/stats", StatsController, :index
     live "/inspect/:subdomain/:token", InspectorLive
   end
