@@ -30,6 +30,7 @@ defmodule RunlocalWeb.TunnelChannel do
             socket
             |> assign(:subdomain, subdomain)
             |> assign(:pending_requests, %{})
+            |> assign(:ws_connections, %{})
 
           send(self(), {:after_join, url, fallback, inspect_token})
           {:ok, socket}
@@ -166,6 +167,52 @@ defmodule RunlocalWeb.TunnelChannel do
     {:noreply, socket}
   end
 
+  def handle_info({:ws_upgrade, ws_id, ws_proxy_pid, request_data}, socket) do
+    Process.monitor(ws_proxy_pid)
+    ws_connections = Map.put(socket.assigns.ws_connections, ws_id, ws_proxy_pid)
+    socket = assign(socket, :ws_connections, ws_connections)
+
+    push(socket, "ws_upgrade", %{
+      "ws_id" => ws_id,
+      "path" => request_data["path"],
+      "query_string" => request_data["query_string"],
+      "headers" => request_data["headers"]
+    })
+
+    {:noreply, socket}
+  end
+
+  def handle_info({:ws_client_frame, ws_id, data, opcode}, socket) do
+    payload = %{"ws_id" => ws_id, "opcode" => to_string(opcode)}
+
+    payload =
+      case opcode do
+        :binary -> Map.put(payload, "data", Base.encode64(data))
+        _ -> Map.put(payload, "data", data)
+      end
+
+    push(socket, "ws_client_frame", payload)
+    {:noreply, socket}
+  end
+
+  def handle_info({:ws_closed, ws_id}, socket) do
+    ws_connections = Map.delete(socket.assigns.ws_connections, ws_id)
+    socket = assign(socket, :ws_connections, ws_connections)
+    push(socket, "ws_close", %{"ws_id" => ws_id})
+    {:noreply, socket}
+  end
+
+  def handle_info({:DOWN, _, :process, pid, _}, socket) do
+    # A WsProxy process died — remove it from ws_connections
+    ws_connections =
+      socket.assigns.ws_connections
+      |> Enum.reject(fn {_id, proxy_pid} -> proxy_pid == pid end)
+      |> Map.new()
+
+    socket = assign(socket, :ws_connections, ws_connections)
+    {:noreply, socket}
+  end
+
   def handle_info(:ttl_expired, socket) do
     {:stop, :normal, socket}
   end
@@ -199,6 +246,36 @@ defmodule RunlocalWeb.TunnelChannel do
           send(caller_pid, {:tunnel_response, request_id, payload})
           {:noreply, assign(socket, :pending_requests, remaining)}
       end
+    end
+  end
+
+  def handle_in("ws_frame", %{"ws_id" => ws_id, "data" => data} = payload, socket) do
+    case Map.get(socket.assigns.ws_connections, ws_id) do
+      nil ->
+        {:noreply, socket}
+
+      ws_proxy_pid ->
+        opcode = String.to_existing_atom(payload["opcode"] || "text")
+
+        frame_data =
+          case opcode do
+            :binary -> Base.decode64!(data)
+            _ -> data
+          end
+
+        send(ws_proxy_pid, {:ws_frame, frame_data, opcode})
+        {:noreply, socket}
+    end
+  end
+
+  def handle_in("ws_close", %{"ws_id" => ws_id}, socket) do
+    case Map.get(socket.assigns.ws_connections, ws_id) do
+      nil ->
+        {:noreply, socket}
+
+      ws_proxy_pid ->
+        send(ws_proxy_pid, {:ws_close})
+        {:noreply, socket}
     end
   end
 
