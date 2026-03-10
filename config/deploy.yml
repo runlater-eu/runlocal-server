@@ -4,12 +4,12 @@ image: gautema/runlocal
 
 builder:
   arch: amd64
-  remote: ssh://root@159.195.53.120
+  remote: ssh://root@10.8.1.1
 
 servers:
   web:
     hosts:
-      - 159.195.53.120
+      - 10.8.1.1
     options:
       ulimit: nofile=65536:65536
       cpu-shares: 128
