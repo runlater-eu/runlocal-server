@@ -48,7 +48,7 @@
         </div>
         <code class="text-emerald-400 text-lg font-mono font-semibold">$ npx runlocal 3000</code>
       </div>
-      <p class="text-slate-300 mb-4">Replace <code class="text-emerald-400 text-sm">3000</code> with whatever port your app runs on. You'll see output like:</p>
+      <p class="text-slate-300 mb-4">Replace <code class="text-emerald-400 text-sm">3000</code> with whatever port your app runs on, or pass a full URL like <code class="text-emerald-400 text-sm">https://10.8.0.1</code>. You'll see output like:</p>
       <div class="glass-card rounded-xl p-5 mb-6">
         <div class="flex items-center gap-2 mb-3">
           <div class="w-3 h-3 rounded-full bg-red-400/60"></div>
@@ -64,6 +64,27 @@
       </div>
       <p class="text-slate-300 mb-6">
         That's it. Anyone on the internet can now reach your local server at the public HTTPS URL. No signup, no config files, no accounts.
+      </p>
+
+      <!-- Proxy any URL -->
+      <h2 class="text-xl font-semibold text-white mt-10 mb-4">Proxy any URL</h2>
+      <p class="text-slate-300 mb-4">
+        Instead of a port number, you can pass a full URL. This is useful for proxying services on other machines or non-localhost addresses — like a VPN peer, a Docker container, or a device on your network.
+      </p>
+      <div class="glass-card rounded-xl p-5 mb-4">
+        <div class="flex items-center gap-2 mb-3">
+          <div class="w-3 h-3 rounded-full bg-red-400/60"></div>
+          <div class="w-3 h-3 rounded-full bg-yellow-400/60"></div>
+          <div class="w-3 h-3 rounded-full bg-green-400/60"></div>
+          <span class="text-slate-400 text-xs ml-2 font-mono">Terminal</span>
+        </div>
+        <div class="text-sm font-mono text-slate-300 space-y-1">
+          <div><span class="text-emerald-400">$</span> npx runlocal https://10.8.0.1</div>
+          <div><span class="text-emerald-400">$</span> npx runlocal http://myapp.local:8080</div>
+        </div>
+      </div>
+      <p class="text-slate-300 mb-6">
+        HTTPS targets work too — the CLI will handle TLS and accept self-signed certificates.
       </p>
 
       <!-- Use cases -->
