@@ -1,6 +1,6 @@
 <div class="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-emerald-900">
   <!-- Nav -->
-  <div class="relative max-w-4xl mx-auto px-6 py-6">
+  <div class="max-w-4xl mx-auto px-6 py-6">
     <div class="flex justify-between items-center">
       <a href="/" class="flex items-center gap-2.5 text-xl font-semibold text-white no-underline">
         <span class="relative flex h-7 w-7 items-center justify-center">
@@ -21,29 +21,11 @@
         </span>
         runlocal
       </a>
-      <!-- Desktop nav links -->
-      <div class="hidden sm:flex items-center gap-4 text-sm">
-        <a href="/getting-started" class="text-slate-400 hover:text-emerald-400 transition-colors">Getting Started</a>
+      <div class="flex items-center gap-3 sm:gap-4 text-xs sm:text-sm">
+        <a href="/getting-started" class="text-slate-400 hover:text-emerald-400 transition-colors">Docs</a>
         <a href="/privacy" class="text-slate-400 hover:text-emerald-400 transition-colors">Privacy</a>
         <a href="https://github.com/runlater-eu/runlocal-server" class="text-slate-400 hover:text-emerald-400 transition-colors">GitHub</a>
       </div>
-      <!-- Mobile hamburger button -->
-      <button
-        id="mobile-menu-btn"
-        onclick="const menu = document.getElementById('mobile-menu'); menu.classList.toggle('hidden');"
-        class="sm:hidden text-slate-400 hover:text-emerald-400 transition-colors p-1"
-        aria-label="Toggle menu"
-      >
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-6 h-6">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
-        </svg>
-      </button>
-    </div>
-    <!-- Mobile dropdown menu -->
-    <div id="mobile-menu" class="hidden sm:hidden absolute right-6 top-full glass-card rounded-xl py-2 px-1 min-w-[160px] z-50">
-      <a href="/getting-started" class="block px-4 py-2 text-sm text-slate-400 hover:text-emerald-400 transition-colors">Getting Started</a>
-      <a href="/privacy" class="block px-4 py-2 text-sm text-slate-400 hover:text-emerald-400 transition-colors">Privacy</a>
-      <a href="https://github.com/runlater-eu/runlocal-server" class="block px-4 py-2 text-sm text-slate-400 hover:text-emerald-400 transition-colors">GitHub</a>
     </div>
   </div>
 
