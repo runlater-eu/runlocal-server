@@ -2,4 +2,4 @@
 set -eu
 
 cd -P -- "$(dirname -- "$0")"
-PHX_SERVER=true exec ./runlocal start
+PHX_SERVER=true exec ./runlocal start --sname runlocal --cookie runlocal
