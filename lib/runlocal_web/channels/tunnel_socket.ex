@@ -11,12 +11,14 @@ defmodule RunlocalWeb.TunnelSocket do
       :error
     else
       query_params = extract_query_params(connect_info)
+      caps = parse_caps(query_params["caps"])
 
       socket =
         socket
         |> assign(:client_ip, client_ip)
         |> assign(:api_key, query_params["api_key"])
         |> assign(:requested_subdomain, query_params["subdomain"])
+        |> assign(:caps, caps)
 
       {:ok, socket}
     end
@@ -30,6 +32,15 @@ defmodule RunlocalWeb.TunnelSocket do
       %URI{query: query} when is_binary(query) -> URI.decode_query(query)
       _ -> %{}
     end
+  end
+
+  defp parse_caps(nil), do: MapSet.new()
+
+  defp parse_caps(caps) when is_binary(caps) do
+    caps
+    |> String.split(",", trim: true)
+    |> Enum.map(&String.trim/1)
+    |> MapSet.new()
   end
 
   defp extract_client_ip(connect_info) do

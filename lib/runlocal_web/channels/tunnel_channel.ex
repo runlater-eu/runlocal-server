@@ -163,7 +163,12 @@ defmodule RunlocalWeb.TunnelChannel do
 
     broadcast_new_request(socket.assigns.subdomain, request_id, request_data)
 
-    push(socket, "http_request", Map.put(request_data, "request_id", request_id))
+    payload =
+      request_data
+      |> Map.put("request_id", request_id)
+      |> encode_outbound_body(socket)
+
+    push(socket, "http_request", payload)
     {:noreply, socket}
   end
 
@@ -222,6 +227,7 @@ defmodule RunlocalWeb.TunnelChannel do
     request_id = payload["request_id"]
     Logger.info("[Channel] Received http_response for #{request_id}, pending keys: #{inspect(Map.keys(socket.assigns.pending_requests))}")
 
+    payload = decode_inbound_body(payload)
     response_body = payload["body"] || ""
 
     if byte_size(response_body) > @max_response_size do
@@ -276,6 +282,36 @@ defmodule RunlocalWeb.TunnelChannel do
       ws_proxy_pid ->
         send(ws_proxy_pid, {:ws_close})
         {:noreply, socket}
+    end
+  end
+
+  defp encode_outbound_body(payload, socket) do
+    if client_supports?(socket, "binary-bodies") do
+      body = payload["body"] || ""
+
+      payload
+      |> Map.put("body", Base.encode64(body))
+      |> Map.put("body_encoding", "base64")
+    else
+      payload
+    end
+  end
+
+  defp client_supports?(socket, cap) do
+    case socket.assigns[:caps] do
+      %MapSet{} = caps -> MapSet.member?(caps, cap)
+      _ -> false
+    end
+  end
+
+  defp decode_inbound_body(payload) do
+    case payload["body_encoding"] do
+      "base64" ->
+        body = payload["body"] || ""
+        Map.put(payload, "body", Base.decode64!(body))
+
+      _ ->
+        payload
     end
   end
 
