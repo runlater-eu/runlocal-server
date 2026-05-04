@@ -1,7 +1,7 @@
 defmodule Runlocal.RateLimiter do
   @table :tunnel_rate_limiter
-  @max_tokens 10
-  @refill_rate 10
+  @max_tokens 100
+  @refill_rate 50
 
   def init do
     :ets.new(@table, [:named_table, :public, :set, write_concurrency: true])

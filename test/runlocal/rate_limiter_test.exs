@@ -6,16 +6,16 @@ defmodule Runlocal.RateLimiterTest do
     Runlocal.RateLimiter.cleanup("rl-test-1")
   end
 
-  test "allows up to 10 requests" do
-    for _ <- 1..10 do
+  test "allows up to 100 requests" do
+    for _ <- 1..100 do
       assert Runlocal.RateLimiter.allow?("rl-test-2")
     end
 
     Runlocal.RateLimiter.cleanup("rl-test-2")
   end
 
-  test "denies after 10 requests" do
-    for _ <- 1..10 do
+  test "denies after 100 requests" do
+    for _ <- 1..100 do
       Runlocal.RateLimiter.allow?("rl-test-3")
     end
 
