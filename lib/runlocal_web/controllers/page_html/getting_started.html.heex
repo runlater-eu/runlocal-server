@@ -147,8 +147,20 @@
         </div>
         <code class="text-emerald-400 text-sm font-mono">$ RUNLATER_API_KEY=your_key npx runlocal 3000</code>
       </div>
+      <p class="text-slate-300 mb-4">
+        Prefer not to keep the key in your shell environment? Save it to <code class="text-emerald-300 bg-slate-800/60 px-1.5 py-0.5 rounded text-xs font-mono">~/.runlater/api-key</code> and runlocal will pick it up automatically:
+      </p>
+      <div class="glass-card rounded-xl p-5 mb-4">
+        <div class="flex items-center gap-2 mb-3">
+          <div class="w-3 h-3 rounded-full bg-red-400/60"></div>
+          <div class="w-3 h-3 rounded-full bg-yellow-400/60"></div>
+          <div class="w-3 h-3 rounded-full bg-green-400/60"></div>
+          <span class="text-slate-400 text-xs ml-2 font-mono">Terminal</span>
+        </div>
+        <code class="text-emerald-400 text-sm font-mono">$ mkdir -p ~/.runlater && echo "your_key" > ~/.runlater/api-key && chmod 600 ~/.runlater/api-key</code>
+      </div>
       <p class="text-slate-300 mb-6">
-        With an API key, you get a stable subdomain derived from your account — the same URL every time. Tunnels with an API key also skip the 2-hour TTL. See <a href="https://runlater.eu" class="text-emerald-400 hover:text-emerald-300">runlater.eu</a> for details.
+        With an API key, you get a stable subdomain derived from your account — the same URL every time. Tunnels with an API key also skip the 2-hour TTL. See <a href="https://runlater.eu" class="text-emerald-400 hover:text-emerald-300">runlater.eu</a> for details. Precedence: <code class="text-emerald-300 bg-slate-800/60 px-1 rounded text-xs font-mono">--api-key</code> &gt; <code class="text-emerald-300 bg-slate-800/60 px-1 rounded text-xs font-mono">RUNLATER_API_KEY</code> &gt; the file.
       </p>
 
       <!-- Limits -->
