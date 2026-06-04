@@ -41,5 +41,9 @@ env:
     MIX_ENV: prod
     SUBDOMAIN_MODE: runlater
     LANDING_PAGE: "true"
+    # The "runlater.eu" hostname is aliased on the Kamal Docker network to the
+    # runlater-web container, which only listens on plain HTTP :4000. Pin the
+    # verify-tunnel call to that internal endpoint so it doesn't try TLS :443.
+    RUNLATER_API_URL: http://runlater.eu:4000
   secret:
     - SECRET_KEY_BASE
