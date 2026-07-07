@@ -129,13 +129,11 @@ defmodule RunlocalWeb.TunnelChannelTest do
     assert Runlocal.Registry.lookup(subdomain) == nil
   end
 
-  test "rejects join when IP has too many tunnels" do
+  test "rejects a second anonymous tunnel from the same IP" do
     ip = "10.99.99.99"
 
-    # Register 5 tunnels for this IP
-    for i <- 1..5 do
-      Runlocal.Registry.register("limit-test-#{i}", self(), ip)
-    end
+    # A single existing tunnel from this IP is enough to block anonymous clients
+    Runlocal.Registry.register("limit-test-1", self(), ip)
 
     result =
       RunlocalWeb.TunnelSocket
@@ -144,9 +142,41 @@ defmodule RunlocalWeb.TunnelChannelTest do
 
     assert {:error, %{reason: "too_many_tunnels"}} = result
 
-    # Cleanup
+    Runlocal.Registry.unregister("limit-test-1")
+  end
+
+  test "registered (api_key) clients may open more than one tunnel per IP" do
+    ip = "10.99.98.98"
+
+    # One tunnel already open from this IP — would block an anonymous client
+    Runlocal.Registry.register("reg-test-existing", self(), ip)
+
+    {:ok, _, socket} =
+      RunlocalWeb.TunnelSocket
+      |> socket(%{}, %{client_ip: ip, api_key: "valid-key"})
+      |> subscribe_and_join(RunlocalWeb.TunnelChannel, "tunnel:connect")
+
+    assert is_binary(socket.assigns.subdomain)
+
+    Runlocal.Registry.unregister("reg-test-existing")
+  end
+
+  test "rejects a registered client only once it hits the higher per-IP limit" do
+    ip = "10.99.97.97"
+
     for i <- 1..5 do
-      Runlocal.Registry.unregister("limit-test-#{i}")
+      Runlocal.Registry.register("reg-limit-#{i}", self(), ip)
+    end
+
+    result =
+      RunlocalWeb.TunnelSocket
+      |> socket(%{}, %{client_ip: ip, api_key: "valid-key"})
+      |> subscribe_and_join(RunlocalWeb.TunnelChannel, "tunnel:connect")
+
+    assert {:error, %{reason: "too_many_tunnels"}} = result
+
+    for i <- 1..5 do
+      Runlocal.Registry.unregister("reg-limit-#{i}")
     end
   end
 end

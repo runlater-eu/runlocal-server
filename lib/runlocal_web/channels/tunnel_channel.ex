@@ -4,13 +4,23 @@ defmodule RunlocalWeb.TunnelChannel do
 
   @two_hours_ms 2 * 60 * 60 * 1000
   @max_tunnels_per_ip 5
+  @max_anonymous_tunnels_per_ip 1
   @max_response_size 10_000_000
 
   @impl true
   def join("tunnel:connect", _payload, socket) do
     client_ip = socket.assigns[:client_ip]
 
-    if client_ip && Runlocal.Registry.count_by_ip(client_ip) >= @max_tunnels_per_ip do
+    # Anonymous clients are limited to a single concurrent tunnel per IP;
+    # clients presenting an api_key get the higher per-IP allowance. In
+    # :runlater mode an invalid api_key is rejected later in resolve_subdomain,
+    # so a bogus key cannot be used to exceed the anonymous limit.
+    max_tunnels =
+      if socket.assigns[:api_key],
+        do: @max_tunnels_per_ip,
+        else: @max_anonymous_tunnels_per_ip
+
+    if client_ip && Runlocal.Registry.count_by_ip(client_ip) >= max_tunnels do
       {:error, %{reason: "too_many_tunnels"}}
     else
       case resolve_subdomain(socket) do
