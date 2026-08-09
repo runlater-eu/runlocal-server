@@ -11,6 +11,7 @@ defmodule Runlocal.Application do
     Runlocal.RateLimiter.init()
     Runlocal.IpBlocklist.init()
     Runlocal.BandwidthLimiter.init()
+    Runlocal.GeoIP.maybe_start_loaders()
 
     children = [
       Runlocal.Stats,

@@ -1,5 +1,6 @@
 defmodule RunlocalWeb.Plugs.SubdomainRouter do
   import Plug.Conn
+  require Logger
 
   def init(opts), do: opts
 
@@ -11,10 +12,44 @@ defmodule RunlocalWeb.Plugs.SubdomainRouter do
         conn
 
       subdomain ->
-        if websocket_upgrade?(conn) do
-          upgrade_websocket(conn, subdomain)
-        else
-          RunlocalWeb.TunnelController.proxy(conn, subdomain)
+        cond do
+          country_blocked?(conn, subdomain) ->
+            RunlocalWeb.TunnelErrorHTML.send_error(conn, 403, "Access restricted", """
+            <p>Access to tunnels is not available from your region.</p>
+            """)
+
+          websocket_upgrade?(conn) ->
+            upgrade_websocket(conn, subdomain)
+
+          true ->
+            RunlocalWeb.TunnelController.proxy(conn, subdomain)
+        end
+    end
+  end
+
+  defp country_blocked?(conn, subdomain) do
+    ip = visitor_ip(conn)
+
+    if Runlocal.GeoIP.blocked_country?(ip) do
+      Logger.warning(
+        "[Tunnel] visitor blocked reason=blocked_country ip=#{ip} country=#{Runlocal.GeoIP.country(ip)} subdomain=#{subdomain}"
+      )
+
+      true
+    else
+      false
+    end
+  end
+
+  defp visitor_ip(conn) do
+    case get_req_header(conn, "x-forwarded-for") do
+      [value | _] ->
+        value |> String.split(",") |> List.first() |> String.trim()
+
+      [] ->
+        case conn.remote_ip do
+          nil -> nil
+          address -> :inet.ntoa(address) |> to_string()
         end
     end
   end
@@ -69,7 +104,8 @@ defmodule RunlocalWeb.Plugs.SubdomainRouter do
         host |> String.replace_suffix(".localhost", "")
 
       # Production: fuzzy-tiger.runlocal.eu
-      base_domain != "localhost" && host != base_domain && String.ends_with?(host, ".#{base_domain}") ->
+      base_domain != "localhost" && host != base_domain &&
+          String.ends_with?(host, ".#{base_domain}") ->
         host |> String.replace_suffix(".#{base_domain}", "")
 
       true ->

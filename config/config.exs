@@ -11,7 +11,12 @@ config :runlocal,
   generators: [timestamp_type: :utc_datetime],
   base_domain: "runlocal.eu",
   subdomain_mode: :random,
-  landing_page: false
+  landing_page: false,
+  # Abuse controls, both off by default. See "Blocking abusive networks"
+  # in the README. ASNs block tunnel *creation* (anonymous clients only);
+  # countries block tunnel *visitors*.
+  blocked_tunnel_asns: [],
+  blocked_visitor_countries: []
 
 # Configure the endpoint
 config :runlocal, RunlocalWeb.Endpoint,

@@ -34,10 +34,17 @@ end
 if subdomain_mode = System.get_env("SUBDOMAIN_MODE") do
   mode =
     case subdomain_mode do
-      "random" -> :random
-      "custom" -> :custom
-      "runlater" -> :runlater
-      other -> raise "invalid SUBDOMAIN_MODE #{inspect(other)}, expected: random, custom, or runlater"
+      "random" ->
+        :random
+
+      "custom" ->
+        :custom
+
+      "runlater" ->
+        :runlater
+
+      other ->
+        raise "invalid SUBDOMAIN_MODE #{inspect(other)}, expected: random, custom, or runlater"
     end
 
   config :runlocal, subdomain_mode: mode
@@ -45,6 +52,35 @@ end
 
 if System.get_env("LANDING_PAGE") == "true" do
   config :runlocal, landing_page: true
+end
+
+# Refuse anonymous tunnel creation from these autonomous systems,
+# e.g. BLOCKED_TUNNEL_ASNS=57043,216246
+if blocked_asns = System.get_env("BLOCKED_TUNNEL_ASNS") do
+  config :runlocal,
+    blocked_tunnel_asns:
+      blocked_asns
+      |> String.split(",", trim: true)
+      |> Enum.map(&(&1 |> String.trim() |> String.to_integer()))
+end
+
+# Refuse tunnel visitors from these ISO 3166-1 countries,
+# e.g. BLOCKED_VISITOR_COUNTRIES=RU,KP
+if blocked_countries = System.get_env("BLOCKED_VISITOR_COUNTRIES") do
+  config :runlocal,
+    blocked_visitor_countries:
+      blocked_countries
+      |> String.split(",", trim: true)
+      |> Enum.map(&(&1 |> String.trim() |> String.upcase()))
+end
+
+# Override the GeoIP database sources (default: free DB-IP Lite files).
+if geoip_asn_db_url = System.get_env("GEOIP_ASN_DB_URL") do
+  config :runlocal, geoip_asn_db_url: geoip_asn_db_url
+end
+
+if geoip_country_db_url = System.get_env("GEOIP_COUNTRY_DB_URL") do
+  config :runlocal, geoip_country_db_url: geoip_country_db_url
 end
 
 if config_env() == :prod do

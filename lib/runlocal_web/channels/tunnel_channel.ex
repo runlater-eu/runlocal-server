@@ -20,35 +20,65 @@ defmodule RunlocalWeb.TunnelChannel do
         do: @max_tunnels_per_ip,
         else: @max_anonymous_tunnels_per_ip
 
-    if client_ip && Runlocal.Registry.count_by_ip(client_ip) >= max_tunnels do
-      {:error, %{reason: "too_many_tunnels"}}
-    else
-      case resolve_subdomain(socket) do
-        {:ok, subdomain, fallback} ->
-          authenticated = socket.assigns[:api_key] != nil and fallback == nil
-          Runlocal.Registry.register(subdomain, self(), client_ip)
-          Runlocal.Stats.track_tunnel(client_ip)
+    cond do
+      network_blocked?(socket, client_ip) ->
+        Logger.warning(
+          "[Tunnel] rejected reason=blocked_network ip=#{client_ip} asn=#{Runlocal.GeoIP.asn(client_ip)}"
+        )
 
-          unless authenticated do
-            Process.send_after(self(), :ttl_expired, @two_hours_ms)
-          end
+        {:error, %{reason: "blocked_network"}}
 
-          url = build_url(subdomain)
-          inspect_token = sign_inspect_token(subdomain)
+      client_ip && Runlocal.Registry.count_by_ip(client_ip) >= max_tunnels ->
+        Logger.warning(
+          "[Tunnel] rejected reason=too_many_tunnels ip=#{client_ip} max=#{max_tunnels}"
+        )
 
-          socket =
-            socket
-            |> assign(:subdomain, subdomain)
-            |> assign(:pending_requests, %{})
-            |> assign(:ws_connections, %{})
+        {:error, %{reason: "too_many_tunnels"}}
 
-          send(self(), {:after_join, url, fallback, inspect_token})
-          {:ok, socket}
+      true ->
+        case resolve_subdomain(socket) do
+          {:ok, subdomain, fallback} ->
+            authenticated = socket.assigns[:api_key] != nil and fallback == nil
+            Runlocal.Registry.register(subdomain, self(), client_ip)
+            Runlocal.Stats.track_tunnel(client_ip)
 
-        {:error, reason} ->
-          {:error, %{reason: reason}}
-      end
+            Logger.info(
+              "[Tunnel] created subdomain=#{subdomain} ip=#{client_ip} authenticated=#{authenticated}"
+            )
+
+            unless authenticated do
+              Process.send_after(self(), :ttl_expired, @two_hours_ms)
+            end
+
+            url = build_url(subdomain)
+            inspect_token = sign_inspect_token(subdomain)
+
+            socket =
+              socket
+              |> assign(:subdomain, subdomain)
+              |> assign(:pending_requests, %{})
+              |> assign(:ws_connections, %{})
+
+            send(self(), {:after_join, url, fallback, inspect_token})
+            {:ok, socket}
+
+          {:error, reason} ->
+            {:error, %{reason: reason}}
+        end
     end
+  end
+
+  # Tunnel creation from blocklisted networks (ASNs) is refused for anonymous
+  # clients. Only :runlater mode actually verifies api_keys (in
+  # resolve_subdomain), so only there does presenting a key earn a bypass —
+  # an invalid key is still rejected before a tunnel is created. In
+  # :random/:custom mode keys are never verified and grant no bypass.
+  defp network_blocked?(socket, client_ip) do
+    verified_key? =
+      socket.assigns[:api_key] != nil and
+        Application.get_env(:runlocal, :subdomain_mode, :random) == :runlater
+
+    not verified_key? and Runlocal.GeoIP.blocked_asn?(client_ip)
   end
 
   defp resolve_subdomain(socket) do
@@ -113,7 +143,12 @@ defmodule RunlocalWeb.TunnelChannel do
       {~c"content-type", ~c"application/json"}
     ]
 
-    case :httpc.request(:post, {String.to_charlist(url), headers, ~c"application/json", body}, [{:timeout, 5000}], []) do
+    case :httpc.request(
+           :post,
+           {String.to_charlist(url), headers, ~c"application/json", body},
+           [{:timeout, 5000}],
+           []
+         ) do
       {:ok, {{_, 200, _}, _, resp_body}} ->
         case Jason.decode(to_string(resp_body)) do
           {:ok, %{"valid" => true, "org_slug" => org_slug, "tier" => tier}} ->
@@ -235,7 +270,10 @@ defmodule RunlocalWeb.TunnelChannel do
   @impl true
   def handle_in("http_response", payload, socket) do
     request_id = payload["request_id"]
-    Logger.info("[Channel] Received http_response for #{request_id}, pending keys: #{inspect(Map.keys(socket.assigns.pending_requests))}")
+
+    Logger.info(
+      "[Channel] Received http_response for #{request_id}, pending keys: #{inspect(Map.keys(socket.assigns.pending_requests))}"
+    )
 
     payload = decode_inbound_body(payload)
     response_body = payload["body"] || ""
@@ -247,7 +285,12 @@ defmodule RunlocalWeb.TunnelChannel do
 
         {{caller_pid, start_time}, remaining} ->
           broadcast_request_updated(socket.assigns.subdomain, request_id, payload, start_time)
-          send(caller_pid, {:tunnel_response, request_id, %{"status" => 502, "body" => "Response too large"}})
+
+          send(
+            caller_pid,
+            {:tunnel_response, request_id, %{"status" => 502, "body" => "Response too large"}}
+          )
+
           {:noreply, assign(socket, :pending_requests, remaining)}
       end
     else
@@ -257,7 +300,10 @@ defmodule RunlocalWeb.TunnelChannel do
           {:noreply, socket}
 
         {{caller_pid, start_time}, remaining} ->
-          Logger.info("[Channel] Sending response to caller #{inspect(caller_pid)} alive=#{Process.alive?(caller_pid)}")
+          Logger.info(
+            "[Channel] Sending response to caller #{inspect(caller_pid)} alive=#{Process.alive?(caller_pid)}"
+          )
+
           broadcast_request_updated(socket.assigns.subdomain, request_id, payload, start_time)
           send(caller_pid, {:tunnel_response, request_id, payload})
           {:noreply, assign(socket, :pending_requests, remaining)}

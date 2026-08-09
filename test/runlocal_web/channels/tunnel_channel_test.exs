@@ -15,7 +15,13 @@ defmodule RunlocalWeb.TunnelChannelTest do
 
   test "join assigns a subdomain and pushes tunnel_created with inspect_token", %{socket: socket} do
     assert socket.assigns.subdomain =~ ~r/^[a-z]+-[a-z]+$/
-    assert_push "tunnel_created", %{"url" => url, "subdomain" => subdomain, "inspect_token" => token}
+
+    assert_push "tunnel_created", %{
+      "url" => url,
+      "subdomain" => subdomain,
+      "inspect_token" => token
+    }
+
     assert subdomain == socket.assigns.subdomain
     assert url =~ subdomain
     assert is_binary(token) and byte_size(token) > 0
@@ -31,7 +37,10 @@ defmodule RunlocalWeb.TunnelChannelTest do
   test "http_response resolves pending request", %{socket: socket} do
     request_id = "test-req-123"
 
-    send(socket.channel_pid, {:http_request, request_id, %{"method" => "GET", "path" => "/"}, self()})
+    send(
+      socket.channel_pid,
+      {:http_request, request_id, %{"method" => "GET", "path" => "/"}, self()}
+    )
 
     assert_push "http_request", %{"request_id" => ^request_id, "method" => "GET"}
 
@@ -57,7 +66,10 @@ defmodule RunlocalWeb.TunnelChannelTest do
     request_id = "test-req-binary"
     binary_body = <<0, 128, 196, 171, 255>>
 
-    send(socket.channel_pid, {:http_request, request_id, %{"method" => "GET", "path" => "/", "body" => ""}, self()})
+    send(
+      socket.channel_pid,
+      {:http_request, request_id, %{"method" => "GET", "path" => "/", "body" => ""}, self()}
+    )
 
     assert_push "http_request", %{"request_id" => ^request_id, "body_encoding" => "base64"}
 
@@ -84,17 +96,29 @@ defmodule RunlocalWeb.TunnelChannelTest do
     request_id = "test-req-bin-out"
     binary_body = <<0, 128, 196, 171, 255>>
 
-    send(socket.channel_pid, {:http_request, request_id, %{"method" => "POST", "path" => "/", "body" => binary_body}, self()})
+    send(
+      socket.channel_pid,
+      {:http_request, request_id, %{"method" => "POST", "path" => "/", "body" => binary_body},
+       self()}
+    )
 
     expected_b64 = Base.encode64(binary_body)
-    assert_push "http_request", %{"request_id" => ^request_id, "body" => ^expected_b64, "body_encoding" => "base64"}
+
+    assert_push "http_request", %{
+      "request_id" => ^request_id,
+      "body" => ^expected_b64,
+      "body_encoding" => "base64"
+    }
   end
 
   test "leaves request body raw when client does not advertise the cap", %{socket: socket} do
     request_id = "test-req-no-cap"
     body = "plain text"
 
-    send(socket.channel_pid, {:http_request, request_id, %{"method" => "POST", "path" => "/", "body" => body}, self()})
+    send(
+      socket.channel_pid,
+      {:http_request, request_id, %{"method" => "POST", "path" => "/", "body" => body}, self()}
+    )
 
     assert_push "http_request", %{"request_id" => ^request_id, "body" => ^body} = pushed
     refute Map.has_key?(pushed, "body_encoding")
@@ -103,7 +127,11 @@ defmodule RunlocalWeb.TunnelChannelTest do
   test "rejects oversized response body", %{socket: socket} do
     request_id = "test-req-oversized"
 
-    send(socket.channel_pid, {:http_request, request_id, %{"method" => "GET", "path" => "/"}, self()})
+    send(
+      socket.channel_pid,
+      {:http_request, request_id, %{"method" => "GET", "path" => "/"}, self()}
+    )
+
     assert_push "http_request", %{"request_id" => ^request_id}
 
     large_body = String.duplicate("x", 10_000_001)
@@ -115,7 +143,8 @@ defmodule RunlocalWeb.TunnelChannelTest do
       "body" => large_body
     })
 
-    assert_receive {:tunnel_response, ^request_id, %{"status" => 502, "body" => "Response too large"}}
+    assert_receive {:tunnel_response, ^request_id,
+                    %{"status" => 502, "body" => "Response too large"}}
   end
 
   test "leave unregisters subdomain", %{socket: socket} do
@@ -159,6 +188,34 @@ defmodule RunlocalWeb.TunnelChannelTest do
     assert is_binary(socket.assigns.subdomain)
 
     Runlocal.Registry.unregister("reg-test-existing")
+  end
+
+  test "rejects anonymous tunnels from blocklisted networks" do
+    # 198.51.100.10 maps to a blocked ASN via :geoip_static in config/test.exs
+    result =
+      RunlocalWeb.TunnelSocket
+      |> socket(%{}, %{client_ip: "198.51.100.10"})
+      |> subscribe_and_join(RunlocalWeb.TunnelChannel, "tunnel:connect")
+
+    assert {:error, %{reason: "blocked_network"}} = result
+  end
+
+  test "api_key does not bypass the network blocklist outside :runlater mode" do
+    result =
+      RunlocalWeb.TunnelSocket
+      |> socket(%{}, %{client_ip: "198.51.100.10", api_key: "some-key"})
+      |> subscribe_and_join(RunlocalWeb.TunnelChannel, "tunnel:connect")
+
+    assert {:error, %{reason: "blocked_network"}} = result
+  end
+
+  test "allows tunnels from networks that are not blocklisted" do
+    {:ok, _, socket} =
+      RunlocalWeb.TunnelSocket
+      |> socket(%{}, %{client_ip: "198.51.100.20"})
+      |> subscribe_and_join(RunlocalWeb.TunnelChannel, "tunnel:connect")
+
+    assert is_binary(socket.assigns.subdomain)
   end
 
   test "rejects a registered client only once it hits the higher per-IP limit" do

@@ -11,6 +11,16 @@ config :runlocal, base_domain: "localhost"
 config :runlocal, subdomain_mode: :random
 config :runlocal, landing_page: false
 
+# GeoIP lookups are stubbed in tests: :geoip_static replaces the MMDB
+# databases entirely, so nothing is ever downloaded (documentation-range IPs).
+config :runlocal,
+  blocked_tunnel_asns: [64500],
+  blocked_visitor_countries: ["XZ"],
+  geoip_static: %{
+    "198.51.100.10" => %{asn: 64500, country: "XZ"},
+    "198.51.100.20" => %{asn: 64501, country: "DE"}
+  }
+
 # Print only warnings and errors during test
 config :logger, level: :warning
 
