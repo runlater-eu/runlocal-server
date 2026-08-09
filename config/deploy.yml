@@ -45,5 +45,9 @@ env:
     # runlater-web container, which only listens on plain HTTP :4000. Pin the
     # verify-tunnel call to that internal endpoint so it doesn't try TLS :443.
     RUNLATER_API_URL: http://runlater.eu:4000
+    # Hosting providers with a history of tunnel abuse:
+    # 57043 = HOSTKEY (Aug 2026 Telegram-gifts marketplace),
+    # 210644 = Aeza (Jul 2026 Telegram casino)
+    BLOCKED_TUNNEL_ASNS: "57043,210644"
   secret:
     - SECRET_KEY_BASE
