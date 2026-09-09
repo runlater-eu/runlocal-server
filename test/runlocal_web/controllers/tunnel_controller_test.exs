@@ -55,8 +55,8 @@ defmodule RunlocalWeb.TunnelControllerTest do
 
     Runlocal.Registry.register("rate-test", channel_pid)
 
-    # Exhaust the token bucket
-    for _ <- 1..10 do
+    # Exhaust the token bucket (100 tokens)
+    for _ <- 1..100 do
       assert Runlocal.RateLimiter.allow?("rate-test")
     end
 

@@ -1,7 +1,7 @@
 # Build stage
-ARG ELIXIR_VERSION=1.19.5
-ARG OTP_VERSION=28.5
-ARG ALPINE_VERSION=3.23.4
+ARG ELIXIR_VERSION=1.20.4
+ARG OTP_VERSION=29.0.6
+ARG ALPINE_VERSION=3.24.1
 
 ARG BUILDER_IMAGE="hexpm/elixir:${ELIXIR_VERSION}-erlang-${OTP_VERSION}-alpine-${ALPINE_VERSION}"
 ARG RUNNER_IMAGE="alpine:${ALPINE_VERSION}"
@@ -46,7 +46,7 @@ RUN mix release
 FROM ${RUNNER_IMAGE} AS runtime
 
 # Install runtime dependencies
-RUN apk add --no-cache libstdc++ openssl ncurses-libs curl
+RUN apk add --no-cache libstdc++ openssl ncurses-libs curl lksctp-tools
 
 # Create app user and data directory
 RUN adduser -D -h /home/app app
