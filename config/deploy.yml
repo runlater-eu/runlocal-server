@@ -26,6 +26,19 @@ proxy:
   app_port: 4000
   healthcheck:
     path: /
+  buffering:
+    # Response buffering defeats tunnel streaming. kamal-proxy only bypasses
+    # its buffer for text/event-stream (its Transfer-Encoding check cannot
+    # match, since Go strips that header off the response), so every other
+    # streamed response was collected in full — spilling to disk past 1MB —
+    # and released to the visitor only once complete.
+    #
+    # The trade buffering normally makes is not worth taking here: it shields
+    # the app from slow clients, but this app's origin is already a laptop at
+    # the far end of a websocket, and it streams rather than holding bodies.
+    responses: false
+    # Requests stay buffered — that costs nothing and still absorbs slow uploads.
+    requests: true
 
 registry:
   server: ghcr.io
