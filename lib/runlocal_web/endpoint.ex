@@ -11,8 +11,17 @@ defmodule RunlocalWeb.Endpoint do
     same_site: "Lax"
   ]
 
+  # The 60s timeout is Phoenix's default and must stay finite: the client
+  # heartbeats every 30s, so two missed beats reap the socket. With
+  # `timeout: :infinity` a half-open connection kept its channel — and
+  # therefore its subdomain registration — alive forever, so every reconnect
+  # was pushed onto a random subdomain while the real hostname 404'd.
   socket "/tunnel", RunlocalWeb.TunnelSocket,
-    websocket: [timeout: :infinity, max_frame_size: 11_000_000, connect_info: [:peer_data, :x_headers, :uri]]
+    websocket: [
+      timeout: 60_000,
+      max_frame_size: 11_000_000,
+      connect_info: [:peer_data, :x_headers, :uri]
+    ]
 
   socket "/__live", Phoenix.LiveView.Socket,
     websocket: [connect_info: [session: @session_options]]

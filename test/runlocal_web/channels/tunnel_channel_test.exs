@@ -1,9 +1,16 @@
 defmodule RunlocalWeb.TunnelChannelTest do
   use RunlocalWeb.ChannelCase
 
+  # Spread the counter across three octets. Folding it into a single octet with
+  # `rem(255)` collided often enough to trip the per-IP tunnel limit and fail an
+  # unrelated test.
+  defp unique_ip do
+    n = System.unique_integer([:positive])
+    "10.#{rem(div(n, 65_536), 256)}.#{rem(div(n, 256), 256)}.#{rem(n, 256)}"
+  end
+
   setup do
-    # Use a unique IP per test to avoid hitting the per-IP tunnel limit
-    unique_ip = "10.0.0.#{System.unique_integer([:positive]) |> rem(255)}"
+    unique_ip = unique_ip()
 
     {:ok, _, socket} =
       RunlocalWeb.TunnelSocket
@@ -55,7 +62,7 @@ defmodule RunlocalWeb.TunnelChannelTest do
   end
 
   test "decodes base64 response body when client advertises binary-bodies cap" do
-    unique_ip = "10.0.1.#{System.unique_integer([:positive]) |> rem(255)}"
+    unique_ip = unique_ip()
     caps = MapSet.new(["binary-bodies"])
 
     {:ok, _, socket} =
@@ -85,7 +92,7 @@ defmodule RunlocalWeb.TunnelChannelTest do
   end
 
   test "base64-encodes outbound request body for clients that advertise the cap" do
-    unique_ip = "10.0.2.#{System.unique_integer([:positive]) |> rem(255)}"
+    unique_ip = unique_ip()
     caps = MapSet.new(["binary-bodies"])
 
     {:ok, _, socket} =
@@ -145,6 +152,151 @@ defmodule RunlocalWeb.TunnelChannelTest do
 
     assert_receive {:tunnel_response, ^request_id,
                     %{"status" => 502, "body" => "Response too large"}}
+  end
+
+  test "tunnel_created advertises what the server can handle", %{socket: _socket} do
+    # Clients must not send streaming frames to a server without handlers for
+    # them, so the server states its capabilities up front.
+    assert_push "tunnel_created", %{"caps" => caps}
+    assert "stream" in caps
+  end
+
+  test "streamed response frames reach the waiting request", %{socket: socket} do
+    request_id = "stream-req-1"
+
+    send(
+      socket.channel_pid,
+      {:http_request, request_id, %{"method" => "GET", "path" => "/"}, self()}
+    )
+
+    assert_push "http_request", %{"request_id" => ^request_id}
+
+    push(socket, "http_response_start", %{
+      "request_id" => request_id,
+      "status" => 200,
+      "headers" => [["content-type", "text/event-stream"]]
+    })
+
+    assert_receive {:tunnel_response_start, ^request_id, 200,
+                    [["content-type", "text/event-stream"]]}
+
+    push(socket, "http_response_chunk", %{
+      "request_id" => request_id,
+      "body" => Base.encode64("tick"),
+      "body_encoding" => "base64"
+    })
+
+    assert_receive {:tunnel_response_chunk, ^request_id, "tick"}
+
+    push(socket, "http_response_end", %{"request_id" => request_id})
+    assert_receive {:tunnel_response_end, ^request_id}
+  end
+
+  test "a streamed response is not subject to the single-frame size cap", %{socket: socket} do
+    request_id = "stream-req-2"
+    chunk = String.duplicate("x", 1_000_000)
+
+    send(
+      socket.channel_pid,
+      {:http_request, request_id, %{"method" => "GET", "path" => "/"}, self()}
+    )
+
+    assert_push "http_request", %{"request_id" => ^request_id}
+
+    push(socket, "http_response_start", %{"request_id" => request_id, "status" => 200})
+    assert_receive {:tunnel_response_start, ^request_id, 200, _}
+
+    for _ <- 1..12 do
+      push(socket, "http_response_chunk", %{
+        "request_id" => request_id,
+        "body" => Base.encode64(chunk),
+        "body_encoding" => "base64"
+      })
+    end
+
+    push(socket, "http_response_end", %{"request_id" => request_id})
+
+    # 12 MB delivered, where a single http_response frame would have been
+    # replaced by a 502 past 10 MB.
+    assert_receive {:tunnel_response_end, ^request_id}
+    refute_receive {:tunnel_response, ^request_id, %{"status" => 502}}
+  end
+
+  test "streamed response frames for an unknown request are ignored", %{socket: socket} do
+    push(socket, "http_response_chunk", %{"request_id" => "ghost", "body" => ""})
+    push(socket, "http_response_end", %{"request_id" => "ghost"})
+    refute_receive {:tunnel_response_end, "ghost"}
+  end
+
+  test "a large request body is pushed to the client as chunks", %{socket: socket} do
+    request_id = "up-1"
+
+    send(
+      socket.channel_pid,
+      {:http_request_start, request_id, %{"method" => "POST", "path" => "/u", "body" => ""},
+       self()}
+    )
+
+    assert_push "http_request_start", %{"request_id" => ^request_id, "body_streaming" => true}
+
+    send(socket.channel_pid, {:http_request_chunk, request_id, "part"})
+    assert_push "http_request_chunk", %{"request_id" => ^request_id, "body" => encoded}
+    assert Base.decode64!(encoded) == "part"
+
+    send(socket.channel_pid, {:http_request_end, request_id})
+    assert_push "http_request_end", %{"request_id" => ^request_id}
+  end
+
+  test "cancel tells the client to abandon the request", %{socket: socket} do
+    request_id = "cancel-1"
+
+    send(
+      socket.channel_pid,
+      {:http_request, request_id, %{"method" => "GET", "path" => "/"}, self()}
+    )
+
+    assert_push "http_request", %{"request_id" => ^request_id}
+
+    send(socket.channel_pid, {:cancel_request, request_id})
+    assert_push "http_cancel", %{"request_id" => ^request_id}
+
+    # The request is forgotten, so a late response is dropped rather than
+    # delivered to a caller that has already given up.
+    push(socket, "http_response", %{"request_id" => request_id, "status" => 200, "body" => "late"})
+
+    refute_receive {:tunnel_response, ^request_id, _}
+  end
+
+  test "a reconnect from the same IP takes the subdomain back" do
+    ip = unique_ip()
+    subdomain = "takeover-#{System.unique_integer([:positive])}"
+
+    old = spawn(fn -> Process.sleep(:infinity) end)
+    Runlocal.Registry.register(subdomain, old, ip)
+
+    assert {:ok, {:took_over, ^old}} = Runlocal.Registry.claim(subdomain, self(), ip)
+    assert Runlocal.Registry.lookup(subdomain).channel_pid == self()
+
+    # The displaced owner's guarded unregister must not remove the new claim.
+    assert Runlocal.Registry.unregister(subdomain, old) == 0
+    assert Runlocal.Registry.lookup(subdomain).channel_pid == self()
+
+    Runlocal.Registry.unregister(subdomain)
+    Process.exit(old, :kill)
+  end
+
+  test "client caps are recorded in the registry for the proxy to read" do
+    unique_ip = unique_ip()
+    caps = MapSet.new(["binary-bodies", "stream"])
+
+    {:ok, _, socket} =
+      RunlocalWeb.TunnelSocket
+      |> socket(%{}, %{client_ip: unique_ip, caps: caps})
+      |> subscribe_and_join(RunlocalWeb.TunnelChannel, "tunnel:connect")
+
+    entry = Runlocal.Registry.lookup(socket.assigns.subdomain)
+    assert Runlocal.Registry.supports?(entry, "stream")
+    refute Runlocal.Registry.supports?(entry, "nope")
   end
 
   test "leave unregisters subdomain", %{socket: socket} do
