@@ -217,9 +217,18 @@ defmodule RunlocalWeb.TunnelController do
   defp put_proxied_headers(conn, headers, opts \\ []) do
     drop = @hop_by_hop_headers ++ Keyword.get(opts, :drop, [])
 
+    headers =
+      headers
+      |> Enum.map(fn [key, value] -> {String.downcase(key), value} end)
+      |> Enum.reject(fn {key, _} -> key in drop end)
+
+    # Headers like set-cookie legitimately repeat, so the origin's values are
+    # added as-is rather than put one by one, which would keep only the last.
+    # Any default Plug set for the same key is cleared first so the origin's
+    # value replaces it instead of appearing alongside it.
     headers
-    |> Enum.reject(fn [key, _] -> String.downcase(key) in drop end)
-    |> Enum.reduce(conn, fn [key, value], acc -> put_resp_header(acc, key, value) end)
+    |> Enum.reduce(conn, fn {key, _}, acc -> delete_resp_header(acc, key) end)
+    |> prepend_resp_headers(headers)
   end
 
   defp bandwidth_exceeded(conn) do

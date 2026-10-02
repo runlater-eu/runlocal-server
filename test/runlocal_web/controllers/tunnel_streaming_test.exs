@@ -105,6 +105,70 @@ defmodule RunlocalWeb.TunnelStreamingTest do
     assert get_resp_header(conn, "connection") == []
   end
 
+  test "keeps every set-cookie header on a streamed response" do
+    test_pid = self()
+
+    client =
+      fake_client(test_pid, fn {:http_request, request_id, _data, caller} ->
+        headers = [
+          ["content-type", "text/plain"],
+          ["set-cookie", "session=abc; Path=/; HttpOnly"],
+          ["set-cookie", "csrf=xyz; Path=/"]
+        ]
+
+        send(caller, {:tunnel_response_start, request_id, 200, headers})
+        send(caller, {:tunnel_response_end, request_id})
+      end)
+
+    register("stream-cookies", client, MapSet.new(["stream"]))
+
+    conn = visit("stream-cookies", "/login")
+
+    assert get_resp_header(conn, "set-cookie") == [
+             "session=abc; Path=/; HttpOnly",
+             "csrf=xyz; Path=/"
+           ]
+  end
+
+  test "keeps every set-cookie header on a buffered response" do
+    test_pid = self()
+
+    client =
+      fake_client(test_pid, fn {:http_request, request_id, _data, caller} ->
+        headers = [
+          ["Set-Cookie", "session=abc; Path=/; HttpOnly"],
+          ["Set-Cookie", "csrf=xyz; Path=/"]
+        ]
+
+        send(caller, {:tunnel_response, request_id, %{"status" => 200, "headers" => headers}})
+      end)
+
+    register("buffered-cookies", client, nil)
+
+    conn = visit("buffered-cookies", "/login")
+
+    assert get_resp_header(conn, "set-cookie") == [
+             "session=abc; Path=/; HttpOnly",
+             "csrf=xyz; Path=/"
+           ]
+  end
+
+  test "an origin header replaces the default instead of duplicating it" do
+    test_pid = self()
+
+    client =
+      fake_client(test_pid, fn {:http_request, request_id, _data, caller} ->
+        headers = [["cache-control", "public, max-age=60"]]
+        send(caller, {:tunnel_response, request_id, %{"status" => 200, "headers" => headers}})
+      end)
+
+    register("buffered-cache", client, nil)
+
+    conn = visit("buffered-cache", "/")
+
+    assert get_resp_header(conn, "cache-control") == ["public, max-age=60"]
+  end
+
   test "a buffered response still works for clients that do not stream" do
     test_pid = self()
 
