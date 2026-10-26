@@ -39,6 +39,28 @@ proxy:
     responses: false
     # Requests stay buffered — that costs nothing and still absorbs slow uploads.
     requests: true
+  # kamal-proxy is shared with runlater-server, whose deploy.yml carries the
+  # same block; keep the two identical, since `kamal proxy reboot` from either
+  # repo boots the proxy from its own copy. Without a `run:` block Kamal falls
+  # back to v0.9.2 and drops the apps-config mount that holds our certificate.
+  #
+  # The proxy request log is the only history of who uses tunnels. A webhook
+  # retry storm writes ~33MB/h, so 20 x 100MB keeps 48h+ even then.
+  run:
+    version: v0.10.2
+    log_max_size: 100m
+    options:
+      log-opt: max-file=20
+      env:
+        - GOGC=800
+        - GOMEMLIMIT=1GiB
+
+# Docker's default here is one 10MB file, which a busy hour overwrites in
+# minutes. Keep 48h+ of app logs at webhook-storm rates (~33MB/h).
+logging:
+  options:
+    max-size: 100m
+    max-file: 20
 
 registry:
   server: ghcr.io
