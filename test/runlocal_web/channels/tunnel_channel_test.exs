@@ -285,6 +285,74 @@ defmodule RunlocalWeb.TunnelChannelTest do
     Process.exit(old, :kill)
   end
 
+  # Switches to :runlater mode with verify-tunnel answered by FakeRunlater.
+  defp runlater_mode(org_slug, tier) do
+    server =
+      start_supervised!(
+        {Bandit,
+         plug: {RunlocalWeb.FakeRunlater, org_slug: org_slug, tier: tier},
+         ip: :loopback,
+         port: 0,
+         startup_log: false}
+      )
+
+    {:ok, {_ip, port}} = ThousandIsland.listener_info(server)
+
+    prev_mode = Application.get_env(:runlocal, :subdomain_mode)
+    prev_url = Application.get_env(:runlocal, :runlater_api_url)
+    Application.put_env(:runlocal, :subdomain_mode, :runlater)
+    Application.put_env(:runlocal, :runlater_api_url, "http://127.0.0.1:#{port}")
+
+    on_exit(fn ->
+      Application.put_env(:runlocal, :subdomain_mode, prev_mode)
+
+      if prev_url,
+        do: Application.put_env(:runlocal, :runlater_api_url, prev_url),
+        else: Application.delete_env(:runlocal, :runlater_api_url)
+    end)
+  end
+
+  test "an org reconnecting from a different IP takes its slug over from a live holder" do
+    org_slug = "org-#{System.unique_integer([:positive])}"
+    runlater_mode(org_slug, "free")
+
+    # The previous connection is still registered and alive — its socket is
+    # half-open — but the client now egresses from another IP.
+    Runlocal.Registry.register(org_slug, self(), unique_ip())
+
+    {:ok, _, socket} =
+      RunlocalWeb.TunnelSocket
+      |> socket(%{}, %{client_ip: unique_ip(), api_key: "org-key"})
+      |> subscribe_and_join(RunlocalWeb.TunnelChannel, "tunnel:connect")
+
+    assert socket.assigns.subdomain == org_slug
+    assert Runlocal.Registry.lookup(org_slug).channel_pid == socket.channel_pid
+    assert_receive :replaced
+    assert_push "tunnel_created", %{"subdomain" => ^org_slug} = msg
+    refute Map.has_key?(msg, "fallback")
+  end
+
+  test "a pro custom subdomain held from another IP is not taken over" do
+    org_slug = "org-#{System.unique_integer([:positive])}"
+    custom = "custom-#{System.unique_integer([:positive])}"
+    runlater_mode(org_slug, "pro")
+
+    holder = spawn(fn -> Process.sleep(:infinity) end)
+    Runlocal.Registry.register(custom, holder, unique_ip())
+
+    {:ok, _, socket} =
+      RunlocalWeb.TunnelSocket
+      |> socket(%{}, %{client_ip: unique_ip(), api_key: "org-key", requested_subdomain: custom})
+      |> subscribe_and_join(RunlocalWeb.TunnelChannel, "tunnel:connect")
+
+    refute socket.assigns.subdomain == custom
+    assert Runlocal.Registry.lookup(custom).channel_pid == holder
+    assert_push "tunnel_created", %{"fallback" => true, "requested_subdomain" => ^custom}
+
+    Runlocal.Registry.unregister(custom)
+    Process.exit(holder, :kill)
+  end
+
   test "client caps are recorded in the registry for the proxy to read" do
     unique_ip = unique_ip()
     caps = MapSet.new(["binary-bodies", "stream"])

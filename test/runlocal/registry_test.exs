@@ -71,6 +71,19 @@ defmodule Runlocal.RegistryTest do
     Process.exit(owner, :kill)
   end
 
+  test "claim with takeover displaces a live registration from a different IP" do
+    owner = spawn(fn -> Process.sleep(:infinity) end)
+    Runlocal.Registry.register("claim-forced", owner, "10.0.0.7")
+
+    assert {:ok, {:took_over, ^owner}} =
+             Runlocal.Registry.claim("claim-forced", self(), "10.0.0.8", takeover: true)
+
+    assert Runlocal.Registry.lookup("claim-forced").channel_pid == self()
+
+    Runlocal.Registry.unregister("claim-forced")
+    Process.exit(owner, :kill)
+  end
+
   test "claim does not take over when the client IP is unknown" do
     owner = spawn(fn -> Process.sleep(:infinity) end)
     Runlocal.Registry.register("claim-nil-ip", owner, nil)

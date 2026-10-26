@@ -27,20 +27,25 @@ defmodule Runlocal.Registry do
   caller is expected to stop the process named in `{:took_over, pid}`.
 
   A live owner on a different IP is a genuine second tunnel and gets `:taken`.
+
+  Pass `takeover: true` when the caller has proven it owns the name outright
+  (an authenticated org claiming its own slug): a live owner is then taken over
+  whatever its IP, since clients behind rotating egress IPs would otherwise
+  never get their name back.
   """
-  def claim(subdomain, channel_pid, client_ip \\ nil) do
+  def claim(subdomain, channel_pid, client_ip \\ nil, opts \\ []) do
     if :ets.insert_new(@table, {subdomain, entry(channel_pid, client_ip)}) do
       {:ok, :claimed}
     else
-      resolve_conflict(subdomain, channel_pid, client_ip)
+      resolve_conflict(subdomain, channel_pid, client_ip, opts)
     end
   end
 
-  defp resolve_conflict(subdomain, channel_pid, client_ip) do
+  defp resolve_conflict(subdomain, channel_pid, client_ip, opts) do
     case lookup(subdomain) do
       # Freed between insert_new/2 and the read — try once more.
       nil ->
-        claim(subdomain, channel_pid, client_ip)
+        claim(subdomain, channel_pid, client_ip, opts)
 
       %{channel_pid: ^channel_pid} ->
         {:ok, :claimed}
@@ -51,7 +56,8 @@ defmodule Runlocal.Registry do
             register(subdomain, channel_pid, client_ip)
             {:ok, {:evicted_stale, owner}}
 
-          not is_nil(client_ip) and owner_ip == client_ip ->
+          Keyword.get(opts, :takeover, false) or
+              (not is_nil(client_ip) and owner_ip == client_ip) ->
             register(subdomain, channel_pid, client_ip)
             {:ok, {:took_over, owner}}
 

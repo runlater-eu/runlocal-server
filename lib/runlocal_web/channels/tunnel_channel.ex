@@ -124,9 +124,12 @@ defmodule RunlocalWeb.TunnelChannel do
     if api_key do
       case verify_tunnel(api_key) do
         {:ok, org_slug, tier} ->
-          org_slug
-          |> Runlocal.Subdomain.pick_subdomain(tier, requested_subdomain)
-          |> claim_or_fallback(client_ip)
+          desired = Runlocal.Subdomain.pick_subdomain(org_slug, tier, requested_subdomain)
+          # The org slug belongs to this org alone, so any live holder is a
+          # previous connection of the same client and can be displaced. A
+          # pro custom subdomain may be wanted by another org and keeps the
+          # IP rule.
+          claim_or_fallback(desired, client_ip, takeover: desired == org_slug)
 
         {:error, reason} ->
           {:error, reason}
@@ -141,9 +144,10 @@ defmodule RunlocalWeb.TunnelChannel do
   # takes the name back rather than being exiled to a random one, which matters
   # because an org slug can only ever front a single tunnel: leaving the zombie
   # in place would 404 the real hostname. The displaced channel is stopped so it
-  # does not linger.
-  defp claim_or_fallback(desired, client_ip) do
-    case Runlocal.Registry.claim(desired, self(), client_ip) do
+  # does not linger. With `takeover: true` the IP need not match — see
+  # `Runlocal.Registry.claim/4`.
+  defp claim_or_fallback(desired, client_ip, opts \\ []) do
+    case Runlocal.Registry.claim(desired, self(), client_ip, opts) do
       {:ok, :claimed} ->
         {:ok, desired, nil}
 
